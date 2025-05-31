@@ -1,0 +1,179 @@
+{
+  "vision_apis": {
+    "google_vision": {
+      "enabled": true,
+      "api_key": "${GOOGLE_VISION_API_KEY}",
+      "rate_limit": 1000,
+      "features": [
+        "TEXT_DETECTION",
+        "LABEL_DETECTION", 
+        "OBJECT_LOCALIZATION",
+        "LOGO_DETECTION"
+      ],
+      "cost_per_request": 0.0015,
+      "priority": 1
+    },
+    "azure_computer_vision": {
+      "enabled": false,
+      "api_key": "${AZURE_CV_API_KEY}",
+      "endpoint": "${AZURE_CV_ENDPOINT}",
+      "rate_limit": 600,
+      "features": [
+        "Categories",
+        "Tags",
+        "Description",
+        "Objects",
+        "Brands",
+        "Faces"
+      ],
+      "cost_per_request": 0.001,
+      "priority": 2
+    },
+    "openai_vision": {
+      "enabled": true,
+      "api_key": "${OPENAI_API_KEY}",
+      "model": "gpt-4-vision-preview",
+      "rate_limit": 100,
+      "max_tokens": 2000,
+      "features": [
+        "contextual_analysis",
+        "accessibility_assessment",
+        "ux_recommendations"
+      ],
+      "cost_per_request": 0.01,
+      "priority": 3
+    },
+    "aws_rekognition": {
+      "enabled": false,
+      "access_key": "${AWS_ACCESS_KEY_ID}",
+      "secret_key": "${AWS_SECRET_ACCESS_KEY}",
+      "region": "us-east-1",
+      "rate_limit": 500,
+      "features": [
+        "Labels",
+        "Text",
+        "Faces"
+      ],
+      "cost_per_request": 0.001,
+      "priority": 4
+    }
+  },
+  "custom_recognizers": {
+    "enabled": true,
+    "training_threshold": 10,
+    "retrain_interval": 3600,
+    "confidence_threshold": 0.6,
+    "supported_issue_types": [
+      "low_contrast_text",
+      "small_clickable_elements", 
+      "inconsistent_fonts",
+      "broken_images",
+      "form_validation_errors",
+      "accessibility_violations",
+      "color_blind_issues",
+      "loading_indicators_missing",
+      "navigation_confusion"
+    ],
+    "training_data_path": "training_data/",
+    "model_save_path": "models/"
+  },
+  "analysis": {
+    "capture_interval": 500,
+    "batch_size": 5,
+    "parallel_requests": 3,
+    "max_queue_size": 1000,
+    "timeout_seconds": 30,
+    "retry_attempts": 3,
+    "cache_results": true,
+    "cache_duration": 300
+  },
+  "screenshot_capture": {
+    "web": {
+      "enabled": true,
+      "browsers": ["chrome", "firefox", "edge"],
+      "capture_method": "puppeteer",
+      "viewport_sizes": [
+        {"width": 1920, "height": 1080},
+        {"width": 1366, "height": 768},
+        {"width": 375, "height": 667}
+      ],
+      "capture_full_page": true,
+      "wait_for_load": 2000
+    },
+    "desktop": {
+      "enabled": true,
+      "platforms": ["windows", "macos", "linux"],
+      "capture_method": "system_api",
+      "monitor_active_window": true,
+      "capture_frequency": 5000
+    },
+    "mobile": {
+      "enabled": false,
+      "android": {
+        "adb_path": "adb",
+        "device_filter": "*",
+        "capture_method": "screencap"
+      },
+      "ios": {
+        "device_support_path": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/DeviceSupport",
+        "capture_method": "libimobiledevice"
+      }
+    }
+  },
+  "issue_detection": {
+    "accessibility": {
+      "enabled": true,
+      "wcag_level": "AA",
+      "check_contrast": true,
+      "check_alt_text": true,
+      "check_focus_indicators": true,
+      "check_touch_targets": true,
+      "min_contrast_ratio": 4.5,
+      "min_touch_target_size": 44
+    },
+    "performance": {
+      "enabled": true,
+      "max_analysis_time": 5.0,
+      "track_response_times": true,
+      "alert_on_slow_analysis": true
+    },
+    "design_consistency": {
+      "enabled": true,
+      "check_font_consistency": true,
+      "check_color_palette": true,
+      "check_spacing": true,
+      "check_alignment": true,
+      "font_variation_threshold": 3,
+      "color_variation_threshold": 5
+    }
+  },
+  "reporting": {
+    "generate_reports": true,
+    "report_interval": 600,
+    "report_formats": ["json", "html"],
+    "include_screenshots": false,
+    "max_report_size": "10MB",
+    "alert_on_critical_issues": true,
+    "email_notifications": false
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/visual_analysis.log",
+    "max_file_size": "50MB",
+    "backup_count": 5,
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  "monitoring": {
+    "heartbeat_interval": 5,
+    "health_check_endpoint": "/health",
+    "metrics_collection": true,
+    "performance_tracking": true,
+    "memory_monitoring": true,
+    "alert_thresholds": {
+      "memory_usage": 85,
+      "cpu_usage": 80,
+      "queue_size": 800,
+      "error_rate": 5
+    }
+  }
+} 
