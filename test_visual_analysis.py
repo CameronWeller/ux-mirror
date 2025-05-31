@@ -42,7 +42,7 @@ class MockOrchestrator:
         """Start mock WebSocket server"""
         import websockets
         
-        async def handle_client(websocket, path):
+        async def handle_client(websocket, path=None):
             try:
                 async for message in websocket:
                     data = json.loads(message)
