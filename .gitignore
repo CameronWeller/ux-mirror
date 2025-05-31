@@ -1,0 +1,65 @@
+# Python Virtual Environment
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VM Files
+*.vdi
+*.vmdk
+*.vhd
+*.qcow2
+vm-snapshots/
+vm-logs/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# GPU Cache
+.nv/
+
+# Model files (too large for git)
+*.pth
+*.bin
+models/
+
+# Configuration files with secrets
+config/secrets.yaml
+.env.local 

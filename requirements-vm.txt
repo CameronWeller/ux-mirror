@@ -1,0 +1,114 @@
+# UX-MIRROR VM: AI-Driven Windows VM Operation and UX Intelligence
+# Requirements for Python 3.11+ - VM Operations Focus
+
+# Core ML and GPU acceleration
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.35.0
+accelerate>=0.24.0
+
+# Computer Vision and Image Processing
+opencv-python>=4.8.0
+Pillow>=10.0.0
+scikit-image>=0.21.0
+matplotlib>=3.7.0
+pytesseract>=0.3.10  # OCR for text recognition in VM
+
+# Scientific Computing and Data Analysis
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+pandas>=2.1.0
+
+# VM Management and Control
+pyvirtualbox>=2.2.0  # VirtualBox Python API
+paramiko>=3.3.0  # SSH for VM communication
+fabric>=3.2.0  # Remote execution over SSH
+pywinrm>=0.4.3  # Windows Remote Management
+
+# VNC/RDP Remote Desktop
+vncdotool>=1.2.0  # VNC client for screen control
+python-rdp>=0.1.0  # RDP client (if available)
+pyvnc>=1.0.0  # Alternative VNC implementation
+
+# Screen Capture and Display
+mss>=9.0.1  # Multi-screen screenshot
+pygetwindow>=0.0.9  # Window management
+pyautogui>=0.9.54  # GUI automation and screen capture
+pyscreenshot>=3.1  # Cross-platform screenshots
+
+# Input Simulation and Control
+pynput>=1.7.6  # Mouse and keyboard control
+keyboard>=0.13.5  # Global hotkeys and input
+mouse>=0.7.1  # Mouse control library
+
+# Network and Communication
+requests>=2.31.0
+websockets>=11.0.0
+aiohttp>=3.9.0
+netifaces>=0.11.0  # Network interface detection
+
+# Async Processing
+asyncio
+asyncssh>=2.14.0  # Async SSH client
+nest-asyncio>=1.5.6
+
+# Data Serialization
+pydantic>=2.0.0
+msgpack>=1.0.0
+pyyaml>=6.0.0
+jsonschema>=4.19.0
+
+# Logging and Monitoring
+loguru>=0.7.0  # Enhanced logging
+rich>=13.5.0  # Rich terminal output
+tqdm>=4.66.0  # Progress bars
+psutil>=5.9.0  # System monitoring
+
+# Performance and GPU Monitoring (Windows)
+GPUtil>=1.4.0
+nvidia-ml-py3>=7.352.0  # NVIDIA GPU monitoring
+pynvml>=11.4.0
+pywin32>=306  # Windows API access
+
+# Database and Storage
+sqlalchemy>=2.0.0
+redis>=5.0.0  # Session and state management
+
+# Image Recognition and AI Vision
+openai>=1.0.0  # GPT Vision API
+anthropic>=0.18.0  # Claude Vision API
+
+# Web Automation (for web apps in VM)
+selenium>=4.15.0
+beautifulsoup4>=4.12.0
+
+# Testing Framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Development Tools
+black>=23.9.0
+flake8>=6.1.0
+mypy>=1.5.0
+
+# Configuration Management
+python-dotenv>=1.0.0
+click>=8.1.0
+typer>=0.9.0
+
+# API Server for VM Control
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Date and Time
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Security
+cryptography>=41.0.0
+pyjwt>=2.8.0
+
+# Hypervisor APIs (Windows-specific)
+wmi>=1.5.1  # Windows Management Instrumentation
+pywin32-ctypes>=0.2.2  # Windows API bindings 
