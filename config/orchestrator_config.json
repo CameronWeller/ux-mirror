@@ -1,0 +1,143 @@
+{
+  "task_processing": {
+    "max_concurrent_tasks": 50,
+    "task_timeout": 300,
+    "max_retries": 3,
+    "load_balance_strategy": "least_loaded",
+    "priority_weights": {
+      "CRITICAL": 1.0,
+      "HIGH": 0.8,
+      "MEDIUM": 0.5,
+      "LOW": 0.2
+    },
+    "task_assignment_strategies": {
+      "screenshot_analysis": "least_loaded",
+      "urgent_analysis": "fastest_response",
+      "custom_recognizer_training": "round_robin",
+      "behavior_analysis": "least_loaded",
+      "performance_optimization": "fastest_response"
+    }
+  },
+  "agent_management": {
+    "heartbeat_timeout": 30,
+    "max_load_threshold": 0.8,
+    "health_check_interval": 10,
+    "registration_timeout": 30,
+    "max_error_threshold": 10,
+    "agent_recovery_timeout": 60,
+    "load_balancing_interval": 5
+  },
+  "insights": {
+    "generation_interval": 60,
+    "confidence_threshold": 0.7,
+    "max_insights_per_minute": 10,
+    "insight_aggregation_window": 300,
+    "critical_insight_threshold": 0.9,
+    "insight_categories": [
+      "performance_degradation",
+      "agent_reliability_issue",
+      "high_task_failure_rate",
+      "resource_optimization",
+      "ux_pattern_detection",
+      "system_anomaly"
+    ]
+  },
+  "monitoring": {
+    "metrics_save_interval": 300,
+    "cleanup_interval": 3600,
+    "max_log_retention_days": 7,
+    "health_check_endpoints": [
+      "/health",
+      "/metrics",
+      "/status"
+    ],
+    "alert_thresholds": {
+      "memory_usage": 90,
+      "cpu_usage": 85,
+      "task_queue_size": 100,
+      "agent_error_rate": 15,
+      "response_time_threshold": 10.0
+    }
+  },
+  "api_endpoints": {
+    "status_endpoint": "/api/status",
+    "tasks_endpoint": "/api/tasks",
+    "insights_endpoint": "/api/insights",
+    "agents_endpoint": "/api/agents",
+    "metrics_endpoint": "/api/metrics"
+  },
+  "security": {
+    "require_authentication": false,
+    "allowed_origins": ["localhost", "127.0.0.1"],
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 100,
+      "burst_size": 20
+    },
+    "agent_verification": {
+      "require_capabilities_validation": true,
+      "max_registration_attempts": 3
+    }
+  },
+  "performance": {
+    "websocket_max_size": 10485760,
+    "websocket_ping_interval": 20,
+    "websocket_ping_timeout": 10,
+    "max_message_queue_size": 1000,
+    "message_processing_timeout": 30
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/orchestrator.log",
+    "max_file_size": "50MB",
+    "backup_count": 5,
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "log_categories": {
+      "agent_management": true,
+      "task_processing": true,
+      "insights_generation": true,
+      "system_monitoring": true,
+      "performance_metrics": false
+    }
+  },
+  "integration": {
+    "external_apis": {
+      "enabled": true,
+      "webhook_notifications": {
+        "enabled": false,
+        "endpoints": [],
+        "events": ["critical_alert", "agent_disconnect", "task_failure"]
+      },
+      "database_integration": {
+        "enabled": false,
+        "connection_string": "",
+        "sync_interval": 600
+      }
+    },
+    "dashboard": {
+      "enabled": true,
+      "host": "localhost",
+      "port": 8080,
+      "auto_refresh_interval": 30,
+      "max_displayed_tasks": 100
+    }
+  },
+  "experimental": {
+    "ai_powered_load_balancing": {
+      "enabled": false,
+      "model_endpoint": "",
+      "prediction_window": 3600
+    },
+    "adaptive_task_prioritization": {
+      "enabled": false,
+      "learning_rate": 0.01,
+      "adaptation_interval": 1800
+    },
+    "predictive_scaling": {
+      "enabled": false,
+      "scale_up_threshold": 0.7,
+      "scale_down_threshold": 0.3,
+      "prediction_horizon": 900
+    }
+  }
+} 
