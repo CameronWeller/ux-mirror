@@ -1,0 +1,50 @@
+# UX-MIRROR VM Core: Essential packages for VM operations
+# Minimal requirements that work reliably on Windows
+
+# Core ML and Computer Vision
+torch>=2.1.0
+torchvision>=0.16.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Screen Capture and GUI Automation
+mss>=9.0.1  # Multi-screen screenshot
+pyautogui>=0.9.54  # GUI automation and screen capture
+pygetwindow>=0.0.9  # Window management
+
+# Input Control
+pynput>=1.7.6  # Mouse and keyboard control
+
+# Network and Communication
+requests>=2.31.0
+websockets>=11.0.0
+aiohttp>=3.9.0
+
+# SSH and Remote Access
+paramiko>=3.3.0  # SSH for VM communication
+
+# Data and Configuration
+pydantic>=2.0.0
+pyyaml>=6.0.0
+python-dotenv>=1.0.0
+
+# Logging and Monitoring
+loguru>=0.7.0  # Enhanced logging
+rich>=13.5.0  # Rich terminal output
+psutil>=5.9.0  # System monitoring
+
+# Windows Specific
+pywin32>=306  # Windows API access
+
+# Development Tools
+click>=8.1.0
+typer>=0.9.0
+
+# API Server
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Async Processing
+nest-asyncio>=1.5.6 

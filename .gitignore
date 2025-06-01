@@ -36,21 +36,104 @@ wheels/
 .DS_Store
 Thumbs.db
 
-# VM Files
+# =============================================================================
+# UX-MIRROR VM Orchestrator Specific
+# =============================================================================
+
+# VM Files and Storage
+vms/
 *.vdi
 *.vmdk
 *.vhd
+*.vhdx
 *.qcow2
+*.nvram
+*.vbox
+*.vbox-prev
+*.vbox-tmp
+
+# VM Snapshots and Backups
+snapshots/
 vm-snapshots/
-vm-logs/
+*.sav
+*.vmsn
+*.vmss
 
-# Logs
-*.log
+# VM Logs and Monitoring
 logs/
+vm-logs/
+*.log
+*.log.*
+VBoxSVC.log*
+VBoxStartup.log*
 
-# Temporary files
+# ISO Images and Installation Media
+iso/
+*.iso
+*.img
+*.dmg
+
+# VirtualBox Configuration and Cache
+.VirtualBox/
+VirtualBoxVMs/
+.vbox_version
+
+# VM Configuration Files with Sensitive Data
+config/secrets.json
+config/vm_credentials.json
+config/*_secrets.*
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Temporary VM Files
+temp/
+tmp/
 *.tmp
 *.temp
+*.tmplog
+*.lck
+*.lock
+
+# SSH Keys and Certificates
+ssh_keys/
+*.pub
+id_rsa*
+id_ed25519*
+
+# Performance and Metrics Data
+metrics/
+performance_data/
+*.sqlite
+*.db
+
+# Screenshots and Analysis Data
+screenshots/
+ui_analysis/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tiff
+
+# VNC and RDP Session Files
+*.vnc
+*.rdp
+
+# Windows VM Specific
+pagefile.sys
+hiberfil.sys
+swapfile.sys
+*.evtx
+
+# Generated Sample Files
+quick_start_example.py
+CLI_EXAMPLES.md
+
+# =============================================================================
+# Original Entries
+# =============================================================================
 
 # GPU Cache
 .nv/
@@ -62,4 +145,35 @@ models/
 
 # Configuration files with secrets
 config/secrets.yaml
-.env.local 
+.env.local
+
+# =============================================================================
+# Development and Testing
+# =============================================================================
+
+# Test Results and Coverage
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage.*
+
+# Jupyter Notebooks Checkpoints
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Profiling
+*.prof
+
+# Local Development
+.vscode/settings.json
+.vscode/launch.json
+
+# Package Management
+Pipfile.lock
+poetry.lock 

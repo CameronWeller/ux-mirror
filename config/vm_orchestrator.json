@@ -1,0 +1,81 @@
+{
+  "vm_defaults": {
+    "memory_mb": 4096,
+    "disk_size_gb": 50,
+    "cpu_cores": 2,
+    "os_type": "Windows11_64",
+    "network_adapter": "NAT",
+    "enable_3d": true,
+    "enable_clipboard": true,
+    "rdp_enabled": true,
+    "vnc_enabled": true
+  },
+  "resource_limits": {
+    "max_concurrent_vms": 5,
+    "max_memory_usage_percent": 80,
+    "max_cpu_usage_percent": 90,
+    "max_disk_usage_percent": 85,
+    "min_free_memory_mb": 2048
+  },
+  "automation": {
+    "auto_cleanup_hours": 24,
+    "health_check_interval": 300,
+    "snapshot_frequency_hours": 6,
+    "auto_snapshot_enabled": true,
+    "max_snapshots_per_vm": 10,
+    "auto_start_on_boot": false
+  },
+  "networking": {
+    "vnc_port_range": [5900, 5950],
+    "rdp_port_range": [3389, 3400],
+    "ssh_port_range": [2222, 2232],
+    "enable_port_forwarding": true,
+    "network_timeout": 30
+  },
+  "storage": {
+    "vm_storage_path": "./vms",
+    "snapshots_path": "./snapshots",
+    "iso_path": "./iso",
+    "max_vm_disk_size_gb": 500,
+    "compression_enabled": true
+  },
+  "security": {
+    "enable_host_isolation": true,
+    "require_authentication": false,
+    "allowed_ssh_keys": [],
+    "firewall_enabled": true,
+    "audit_logging": true
+  },
+  "performance": {
+    "cpu_priority": "normal",
+    "io_priority": "normal",
+    "enable_hardware_acceleration": true,
+    "enable_nested_virtualization": true,
+    "memory_ballooning": true
+  },
+  "logging": {
+    "log_level": "INFO",
+    "log_file": "logs/vm_orchestrator.log",
+    "max_log_size_mb": 100,
+    "log_retention_days": 7,
+    "enable_debug_logging": false
+  },
+  "integration": {
+    "ux_mirror_agent_enabled": true,
+    "agent_communication_port": 8765,
+    "enable_metrics_export": true,
+    "metrics_port": 9090,
+    "enable_web_ui": false,
+    "web_ui_port": 8080
+  },
+  "advanced": {
+    "enable_gpu_passthrough": false,
+    "enable_usb_passthrough": false,
+    "custom_boot_order": ["disk", "cdrom", "network"],
+    "bios_settings": {
+      "enable_acpi": true,
+      "enable_ioapic": true,
+      "enable_pae": true
+    }
+  }
+} 
