@@ -61,6 +61,11 @@ class VMTaskType(Enum):
     SCREEN_CAPTURE = "screen_capture"
     REMOTE_COMMAND = "remote_command"
     FILE_TRANSFER = "file_transfer"
+    MOUSE_CLICK = "mouse_click"
+    TYPE_TEXT = "type_text"
+    SEND_KEY = "send_key"
+    FIND_AND_CLICK = "find_and_click"
+    AUTOMATE_SEQUENCE = "automate_sequence"
 
 @dataclass
 class VMConfiguration:
@@ -344,6 +349,209 @@ class VMScreenCapture:
         except Exception as e:
             logger.error(f"Error analyzing UI elements: {e}")
             return []
+    
+    async def move_mouse(self, x: int, y: int) -> bool:
+        """Move mouse to specified coordinates"""
+        try:
+            if self.vnc_client:
+                self.vnc_client.move(x, y)
+                logger.debug(f"Mouse moved to ({x}, {y}) in VM '{self.vm_info.name}'")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to move mouse in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    async def click(self, x: int, y: int, button: str = "left") -> bool:
+        """Click at specified coordinates"""
+        try:
+            if self.vnc_client:
+                await self.move_mouse(x, y)
+                await asyncio.sleep(0.1)  # Small delay for mouse movement
+                
+                if button == "left":
+                    self.vnc_client.click()
+                elif button == "right":
+                    self.vnc_client.rightclick()
+                elif button == "middle":
+                    self.vnc_client.middleclick()
+                
+                logger.debug(f"{button.capitalize()} click at ({x}, {y}) in VM '{self.vm_info.name}'")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to click in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    async def double_click(self, x: int, y: int) -> bool:
+        """Double-click at specified coordinates"""
+        try:
+            if self.vnc_client:
+                await self.move_mouse(x, y)
+                await asyncio.sleep(0.1)
+                self.vnc_client.click()
+                await asyncio.sleep(0.05)
+                self.vnc_client.click()
+                logger.debug(f"Double-click at ({x}, {y}) in VM '{self.vm_info.name}'")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to double-click in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    async def type_text(self, text: str, delay: float = 0.05) -> bool:
+        """Type text with optional delay between keystrokes"""
+        try:
+            if self.vnc_client:
+                for char in text:
+                    self.vnc_client.type(char)
+                    if delay > 0:
+                        await asyncio.sleep(delay)
+                logger.debug(f"Typed text in VM '{self.vm_info.name}': {text[:20]}...")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to type text in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    async def send_key(self, key: str) -> bool:
+        """Send special key (e.g., 'enter', 'tab', 'escape', 'ctrl-c')"""
+        try:
+            if self.vnc_client:
+                # Map common key names to VNC key codes
+                key_mapping = {
+                    'enter': 'Return',
+                    'tab': 'Tab',
+                    'escape': 'Escape',
+                    'space': 'space',
+                    'backspace': 'BackSpace',
+                    'delete': 'Delete',
+                    'up': 'Up',
+                    'down': 'Down',
+                    'left': 'Left',
+                    'right': 'Right',
+                    'home': 'Home',
+                    'end': 'End',
+                    'pageup': 'Page_Up',
+                    'pagedown': 'Page_Down',
+                    'f1': 'F1',
+                    'f2': 'F2',
+                    'f3': 'F3',
+                    'f4': 'F4',
+                    'f5': 'F5',
+                    'f12': 'F12'
+                }
+                
+                # Handle key combinations
+                if '-' in key:
+                    parts = key.split('-')
+                    if parts[0] in ['ctrl', 'alt', 'shift']:
+                        # Handle modifier+key combinations
+                        self.vnc_client.keyPress(key)
+                    else:
+                        # Regular key
+                        vnc_key = key_mapping.get(key.lower(), key)
+                        self.vnc_client.keyPress(vnc_key)
+                else:
+                    vnc_key = key_mapping.get(key.lower(), key)
+                    self.vnc_client.keyPress(vnc_key)
+                
+                logger.debug(f"Sent key '{key}' to VM '{self.vm_info.name}'")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to send key in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    async def drag(self, start_x: int, start_y: int, end_x: int, end_y: int) -> bool:
+        """Perform mouse drag from start to end coordinates"""
+        try:
+            if self.vnc_client:
+                await self.move_mouse(start_x, start_y)
+                await asyncio.sleep(0.1)
+                self.vnc_client.mousePress(1)  # Left button down
+                await asyncio.sleep(0.1)
+                await self.move_mouse(end_x, end_y)
+                await asyncio.sleep(0.1)
+                self.vnc_client.mouseRelease(1)  # Left button up
+                logger.debug(f"Dragged from ({start_x}, {start_y}) to ({end_x}, {end_y}) in VM '{self.vm_info.name}'")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to drag in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    async def scroll(self, x: int, y: int, direction: str = "down", amount: int = 3) -> bool:
+        """Scroll at specified position"""
+        try:
+            if self.vnc_client:
+                await self.move_mouse(x, y)
+                await asyncio.sleep(0.1)
+                
+                # VNC scroll is typically done with button 4 (up) and 5 (down)
+                button = 5 if direction == "down" else 4
+                
+                for _ in range(amount):
+                    self.vnc_client.mousePress(button)
+                    self.vnc_client.mouseRelease(button)
+                    await asyncio.sleep(0.05)
+                
+                logger.debug(f"Scrolled {direction} at ({x}, {y}) in VM '{self.vm_info.name}'")
+                return True
+            else:
+                logger.error(f"VNC not connected for VM '{self.vm_info.name}'")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to scroll in VM '{self.vm_info.name}': {e}")
+            return False
+    
+    def find_element_by_text(self, screenshot: np.ndarray, text: str) -> Optional[Dict[str, Any]]:
+        """Find UI element containing specific text using OCR"""
+        try:
+            # Import pytesseract only when needed
+            import pytesseract
+            
+            # Convert to grayscale for better OCR
+            gray = cv2.cvtColor(screenshot, cv2.COLOR_RGB2GRAY)
+            
+            # Get OCR data with bounding boxes
+            data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT)
+            
+            # Search for text
+            for i in range(len(data['text'])):
+                if text.lower() in data['text'][i].lower():
+                    x = data['left'][i]
+                    y = data['top'][i]
+                    w = data['width'][i]
+                    h = data['height'][i]
+                    
+                    return {
+                        "text": data['text'][i],
+                        "bounds": {"x": x, "y": y, "width": w, "height": h},
+                        "center": {"x": x + w // 2, "y": y + h // 2},
+                        "confidence": data['conf'][i]
+                    }
+            
+            return None
+            
+        except ImportError:
+            logger.warning("pytesseract not installed - OCR functionality unavailable")
+            return None
+        except Exception as e:
+            logger.error(f"Error finding element by text: {e}")
+            return None
 
 class VMRemoteControl:
     """VM remote control via SSH and other protocols"""
@@ -684,6 +892,16 @@ class VMOrchestrator:
                     await self._handle_screen_capture_task(task)
                 elif task_type == VMTaskType.REMOTE_COMMAND.value:
                     await self._handle_remote_command_task(task)
+                elif task_type == VMTaskType.MOUSE_CLICK.value:
+                    await self._handle_mouse_click_task(task)
+                elif task_type == VMTaskType.TYPE_TEXT.value:
+                    await self._handle_type_text_task(task)
+                elif task_type == VMTaskType.SEND_KEY.value:
+                    await self._handle_send_key_task(task)
+                elif task_type == VMTaskType.FIND_AND_CLICK.value:
+                    await self._handle_find_and_click_task(task)
+                elif task_type == VMTaskType.AUTOMATE_SEQUENCE.value:
+                    await self._handle_automate_sequence_task(task)
                 else:
                     logger.warning(f"Unknown task type: {task_type}")
                 
@@ -819,6 +1037,202 @@ class VMOrchestrator:
             
         except Exception as e:
             task["result"] = {"error": str(e), "status": "failed"}
+    
+    async def _handle_mouse_click_task(self, task: Dict[str, Any]):
+        """Handle mouse click task"""
+        try:
+            vm_name = task["data"]["vm_name"]
+            x = task["data"]["x"]
+            y = task["data"]["y"]
+            button = task["data"]["button"]
+            
+            if vm_name not in self.managed_vms:
+                raise Exception(f"VM '{vm_name}' not found")
+            
+            vm_info = self.managed_vms[vm_name]
+            screen_capture = VMScreenCapture(vm_info)
+            
+            if await screen_capture.connect_vnc():
+                success = await screen_capture.click(x, y, button)
+                
+                task["result"] = {"status": "clicked" if success else "failed"}
+            else:
+                task["result"] = {"error": "Failed to connect VNC", "status": "failed"}
+            
+        except Exception as e:
+            task["result"] = {"error": str(e), "status": "failed"}
+    
+    async def _handle_type_text_task(self, task: Dict[str, Any]):
+        """Handle type text task"""
+        try:
+            vm_name = task["data"]["vm_name"]
+            text = task["data"]["text"]
+            delay = task["data"].get("delay", 0.05)
+            
+            if vm_name not in self.managed_vms:
+                raise Exception(f"VM '{vm_name}' not found")
+            
+            vm_info = self.managed_vms[vm_name]
+            screen_capture = VMScreenCapture(vm_info)
+            
+            if await screen_capture.connect_vnc():
+                success = await screen_capture.type_text(text, delay)
+                
+                task["result"] = {"status": "typed" if success else "failed"}
+            else:
+                task["result"] = {"error": "Failed to connect VNC", "status": "failed"}
+            
+        except Exception as e:
+            task["result"] = {"error": str(e), "status": "failed"}
+    
+    async def _handle_send_key_task(self, task: Dict[str, Any]):
+        """Handle send key task"""
+        try:
+            vm_name = task["data"]["vm_name"]
+            key = task["data"]["key"]
+            
+            if vm_name not in self.managed_vms:
+                raise Exception(f"VM '{vm_name}' not found")
+            
+            vm_info = self.managed_vms[vm_name]
+            screen_capture = VMScreenCapture(vm_info)
+            
+            if await screen_capture.connect_vnc():
+                success = await screen_capture.send_key(key)
+                
+                task["result"] = {"status": "sent" if success else "failed"}
+            else:
+                task["result"] = {"error": "Failed to connect VNC", "status": "failed"}
+            
+        except Exception as e:
+            task["result"] = {"error": str(e), "status": "failed"}
+    
+    async def _handle_find_and_click_task(self, task: Dict[str, Any]):
+        """Handle find and click task"""
+        try:
+            vm_name = task["data"]["vm_name"]
+            text = task["data"]["text"]
+            
+            if vm_name not in self.managed_vms:
+                raise Exception(f"VM '{vm_name}' not found")
+            
+            vm_info = self.managed_vms[vm_name]
+            screen_capture = VMScreenCapture(vm_info)
+            
+            if await screen_capture.connect_vnc():
+                # Take screenshot
+                screenshot = await screen_capture.capture_screenshot()
+                if screenshot is not None:
+                    # Find element by text
+                    element = screen_capture.find_element_by_text(screenshot, text)
+                    if element:
+                        # Click on the center of the found element
+                        center_x = element["center"]["x"]
+                        center_y = element["center"]["y"]
+                        success = await screen_capture.click(center_x, center_y, "left")
+                        
+                        task["result"] = {
+                            "status": "clicked" if success else "failed",
+                            "element_found": True,
+                            "clicked_at": {"x": center_x, "y": center_y}
+                        }
+                    else:
+                        task["result"] = {
+                            "status": "failed",
+                            "error": f"Element with text '{text}' not found",
+                            "element_found": False
+                        }
+                else:
+                    task["result"] = {"error": "Failed to capture screenshot", "status": "failed"}
+            else:
+                task["result"] = {"error": "Failed to connect VNC", "status": "failed"}
+            
+        except Exception as e:
+            task["result"] = {"error": str(e), "status": "failed"}
+    
+    async def _handle_automate_sequence_task(self, task: Dict[str, Any]):
+        """Handle automate sequence task"""
+        try:
+            vm_name = task["data"]["vm_name"]
+            sequence = task["data"]["sequence"]
+            
+            if vm_name not in self.managed_vms:
+                raise Exception(f"VM '{vm_name}' not found")
+            
+            vm_info = self.managed_vms[vm_name]
+            screen_capture = VMScreenCapture(vm_info)
+            
+            if await screen_capture.connect_vnc():
+                results = await self._execute_sequence(screen_capture, sequence)
+                
+                task["result"] = {
+                    "status": "executed",
+                    "steps_completed": len([r for r in results if r]),
+                    "total_steps": len(sequence)
+                }
+            else:
+                task["result"] = {"error": "Failed to connect VNC", "status": "failed"}
+            
+        except Exception as e:
+            task["result"] = {"error": str(e), "status": "failed"}
+    
+    async def _execute_sequence(self, screen_capture: VMScreenCapture, sequence: List[Dict[str, Any]]) -> List[bool]:
+        """Execute a sequence of actions"""
+        results = []
+        try:
+            for action in sequence:
+                action_type = action.get("type")
+                success = False
+                
+                if action_type == "click":
+                    success = await screen_capture.click(
+                        action["x"], action["y"], action.get("button", "left")
+                    )
+                elif action_type == "type_text":
+                    success = await screen_capture.type_text(
+                        action["text"], action.get("delay", 0.05)
+                    )
+                elif action_type == "send_key":
+                    success = await screen_capture.send_key(action["key"])
+                elif action_type == "drag":
+                    success = await screen_capture.drag(
+                        action["start_x"], action["start_y"], 
+                        action["end_x"], action["end_y"]
+                    )
+                elif action_type == "scroll":
+                    success = await screen_capture.scroll(
+                        action["x"], action["y"], 
+                        action.get("direction", "down"), 
+                        action.get("amount", 3)
+                    )
+                elif action_type == "delay":
+                    # Handle delay action
+                    delay_seconds = action.get("seconds", 1)
+                    await asyncio.sleep(delay_seconds)
+                    success = True
+                elif action_type == "double_click":
+                    success = await screen_capture.double_click(
+                        action["x"], action["y"]
+                    )
+                elif action_type == "move_mouse":
+                    success = await screen_capture.move_mouse(
+                        action["x"], action["y"]
+                    )
+                else:
+                    logger.warning(f"Unknown action type: {action_type}")
+                    success = False
+                
+                results.append(success)
+                
+                # Add small delay between actions unless it's a delay action itself
+                if action_type != "delay":
+                    await asyncio.sleep(0.1)
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error executing sequence: {e}")
+            return results
     
     async def _monitor_vm_health(self):
         """Monitor health of all managed VMs"""

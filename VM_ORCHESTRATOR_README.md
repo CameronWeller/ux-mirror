@@ -447,10 +447,43 @@ Focus areas:
 
 ## 📞 Support
 
-- **Documentation**: See README.md and inline code comments
-- **Issues**: GitHub issue tracker
+For full documentation, see README.md and inline code comments
 - **Examples**: `CLI_EXAMPLES.md` and `quick_start_example.py`
 - **Setup**: Run `python setup_vm_environment.py` for environment validation
+
+## 🆕 New Features
+
+### Input Automation
+The VM Orchestrator now includes comprehensive input automation capabilities:
+
+- **Mouse Control**: Click, double-click, drag, and scroll operations
+- **Keyboard Input**: Type text and send special keys
+- **OCR Integration**: Find and click elements by text content
+- **Automation Sequences**: Chain multiple actions together
+
+Example automation sequence:
+```bash
+python vm_cli.py automate --name my-vm --sequence-file examples/automation_sequences/open_notepad.json
+```
+
+### VM Templates
+Deploy pre-configured VMs quickly with the template system:
+
+```bash
+# Create a template
+python vm_cli.py template create --name "Dev Environment" --memory 8192 --disk 100
+
+# Deploy from template
+python vm_cli.py template deploy --template-id <id> --vm-name new-dev-vm
+```
+
+### Enhanced Testing
+Run the comprehensive test suite with:
+```bash
+python test_vm_orchestrator.py
+```
+
+For detailed information about new features, see [VM_QUICK_START_GUIDE.md](VM_QUICK_START_GUIDE.md)
 
 ---
 

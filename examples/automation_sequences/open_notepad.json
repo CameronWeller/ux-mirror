@@ -1,0 +1,62 @@
+[
+  {
+    "type": "click",
+    "x": 50,
+    "y": 1050,
+    "button": "left",
+    "comment": "Click Start button"
+  },
+  {
+    "type": "delay",
+    "seconds": 1,
+    "comment": "Wait for Start menu"
+  },
+  {
+    "type": "type_text",
+    "text": "notepad",
+    "delay": 0.1,
+    "comment": "Type 'notepad' to search"
+  },
+  {
+    "type": "delay",
+    "seconds": 0.5,
+    "comment": "Wait for search results"
+  },
+  {
+    "type": "send_key",
+    "key": "enter",
+    "comment": "Press Enter to open Notepad"
+  },
+  {
+    "type": "delay",
+    "seconds": 2,
+    "comment": "Wait for Notepad to open"
+  },
+  {
+    "type": "type_text",
+    "text": "Hello from UX-MIRROR VM Orchestrator!\n\nThis is an automated test message.\n",
+    "delay": 0.05,
+    "comment": "Type test message"
+  },
+  {
+    "type": "send_key",
+    "key": "ctrl-s",
+    "comment": "Save file"
+  },
+  {
+    "type": "delay",
+    "seconds": 1,
+    "comment": "Wait for Save dialog"
+  },
+  {
+    "type": "type_text",
+    "text": "test_automation.txt",
+    "delay": 0.05,
+    "comment": "Type filename"
+  },
+  {
+    "type": "send_key",
+    "key": "enter",
+    "comment": "Save the file"
+  }
+] 

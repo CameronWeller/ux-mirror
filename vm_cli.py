@@ -27,6 +27,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 from vm_orchestrator import VMOrchestrator, VMConfiguration, VMTaskType
+import click
 
 class VMCLI:
     """Command-line interface for VM management"""
@@ -322,6 +323,250 @@ class VMCLI:
         
         print("")
         raise Exception(f"Task {task_id} timed out after {timeout} seconds")
+
+@click.command()
+@click.option('--name', required=True, help='Name of the VM')
+@click.option('--username', required=True, help='Username for VM')
+@click.option('--password', required=True, help='Password for VM')
+@click.option('--command', required=True, help='Command to execute')
+def exec(name, username, password, command):
+    """Execute a command in a VM"""
+    async def run():
+        orchestrator = VMOrchestrator()
+        await orchestrator.initialize()
+        
+        task_id = await orchestrator.add_task(
+            VMTaskType.REMOTE_COMMAND,
+            {
+                'vm_name': name,
+                'command': command,
+                'username': username,
+                'password': password
+            }
+        )
+        
+        click.echo(f"Task {task_id} created for command execution")
+    
+    asyncio.run(run())
+
+@click.command()
+@click.option('--name', required=True, help='Name of the VM')
+@click.option('--x', required=True, type=int, help='X coordinate')
+@click.option('--y', required=True, type=int, help='Y coordinate')
+@click.option('--button', default='left', help='Mouse button (left/right/middle)')
+def click_vm(name, x, y, button):
+    """Click at coordinates in a VM"""
+    async def run():
+        orchestrator = VMOrchestrator()
+        await orchestrator.initialize()
+        
+        task_id = await orchestrator.add_task(
+            VMTaskType.MOUSE_CLICK,
+            {
+                'vm_name': name,
+                'x': x,
+                'y': y,
+                'button': button
+            }
+        )
+        
+        click.echo(f"Click task {task_id} created at ({x}, {y})")
+    
+    asyncio.run(run())
+
+@click.command()
+@click.option('--name', required=True, help='Name of the VM')
+@click.option('--text', required=True, help='Text to type')
+@click.option('--delay', default=0.05, help='Delay between keystrokes')
+def type_text(name, text, delay):
+    """Type text in a VM"""
+    async def run():
+        orchestrator = VMOrchestrator()
+        await orchestrator.initialize()
+        
+        task_id = await orchestrator.add_task(
+            VMTaskType.TYPE_TEXT,
+            {
+                'vm_name': name,
+                'text': text,
+                'delay': delay
+            }
+        )
+        
+        click.echo(f"Type text task {task_id} created")
+    
+    asyncio.run(run())
+
+@click.command()
+@click.option('--name', required=True, help='Name of the VM')
+@click.option('--key', required=True, help='Key to send (e.g., enter, tab, escape)')
+def send_key(name, key):
+    """Send a special key to a VM"""
+    async def run():
+        orchestrator = VMOrchestrator()
+        await orchestrator.initialize()
+        
+        task_id = await orchestrator.add_task(
+            VMTaskType.SEND_KEY,
+            {
+                'vm_name': name,
+                'key': key
+            }
+        )
+        
+        click.echo(f"Send key task {task_id} created for key '{key}'")
+    
+    asyncio.run(run())
+
+@click.command()
+@click.option('--name', required=True, help='Name of the VM')
+@click.option('--sequence-file', required=True, type=click.Path(exists=True), help='JSON file with automation sequence')
+def automate(name, sequence_file):
+    """Run an automation sequence on a VM"""
+    async def run():
+        # Load sequence from file
+        with open(sequence_file, 'r') as f:
+            sequence = json.load(f)
+        
+        orchestrator = VMOrchestrator()
+        await orchestrator.initialize()
+        
+        task_id = await orchestrator.add_task(
+            VMTaskType.AUTOMATE_SEQUENCE,
+            {
+                'vm_name': name,
+                'sequence': sequence
+            }
+        )
+        
+        click.echo(f"Automation sequence task {task_id} created")
+    
+    asyncio.run(run())
+
+# Template management commands
+@click.group()
+def template():
+    """VM template management commands"""
+    pass
+
+@template.command('create')
+@click.option('--name', required=True, help='Template name')
+@click.option('--description', required=True, help='Template description')
+@click.option('--memory', default=4096, help='Memory in MB')
+@click.option('--disk', default=50, help='Disk size in GB')
+@click.option('--cpus', default=2, help='Number of CPU cores')
+@click.option('--os-type', default='Windows11_64', help='OS type')
+@click.option('--tags', multiple=True, help='Template tags')
+def template_create(name, description, memory, disk, cpus, os_type, tags):
+    """Create a new VM template"""
+    from vm_template_manager import VMTemplateManager
+    
+    manager = VMTemplateManager()
+    
+    config = VMConfiguration(
+        name=f"{name}_template",
+        memory_mb=memory,
+        disk_size_gb=disk,
+        cpu_cores=cpus,
+        os_type=os_type
+    )
+    
+    template = manager.create_template(
+        name=name,
+        description=description,
+        base_config=config,
+        tags=list(tags)
+    )
+    
+    click.echo(f"Created template '{name}' with ID: {template.template_id}")
+
+@template.command('list')
+@click.option('--tags', multiple=True, help='Filter by tags')
+def template_list(tags):
+    """List available VM templates"""
+    from vm_template_manager import VMTemplateManager
+    
+    manager = VMTemplateManager()
+    templates = manager.list_templates(tags=list(tags) if tags else None)
+    
+    if not templates:
+        click.echo("No templates found")
+        return
+    
+    click.echo("\nAvailable VM Templates:")
+    click.echo("-" * 80)
+    
+    for tmpl in templates:
+        click.echo(f"ID: {tmpl.template_id}")
+        click.echo(f"Name: {tmpl.name}")
+        click.echo(f"Description: {tmpl.description}")
+        click.echo(f"Base Config: {tmpl.base_config.memory_mb}MB RAM, {tmpl.base_config.cpu_cores} CPUs")
+        click.echo(f"Tags: {', '.join(tmpl.tags)}")
+        click.echo(f"Created: {tmpl.created_at}")
+        click.echo("-" * 80)
+
+@template.command('deploy')
+@click.option('--template-id', required=True, help='Template ID')
+@click.option('--vm-name', required=True, help='Name for the new VM')
+@click.option('--memory', type=int, help='Override memory (MB)')
+@click.option('--cpus', type=int, help='Override CPU cores')
+def template_deploy(template_id, vm_name, memory, cpus):
+    """Deploy a VM from a template"""
+    from vm_template_manager import VMTemplateManager
+    
+    async def run():
+        manager = VMTemplateManager()
+        orchestrator = VMOrchestrator()
+        await orchestrator.initialize()
+        
+        # Prepare custom config
+        custom_config = {}
+        if memory:
+            custom_config['memory_mb'] = memory
+        if cpus:
+            custom_config['cpu_cores'] = cpus
+        
+        try:
+            vm_uuid = await manager.deploy_from_template(
+                template_id,
+                vm_name,
+                orchestrator,
+                custom_config
+            )
+            
+            click.echo(f"Successfully deployed VM '{vm_name}' from template")
+            click.echo(f"VM UUID: {vm_uuid}")
+            
+        except Exception as e:
+            click.echo(f"Error deploying from template: {e}", err=True)
+    
+    asyncio.run(run())
+
+@template.command('delete')
+@click.option('--template-id', required=True, help='Template ID to delete')
+@click.confirmation_option(prompt='Are you sure you want to delete this template?')
+def template_delete(template_id):
+    """Delete a VM template"""
+    from vm_template_manager import VMTemplateManager
+    
+    manager = VMTemplateManager()
+    
+    if manager.delete_template(template_id):
+        click.echo(f"Template {template_id} deleted successfully")
+    else:
+        click.echo(f"Failed to delete template {template_id}", err=True)
+
+@click.command()
+def test():
+    """Run VM orchestrator tests"""
+    import subprocess
+    result = subprocess.run([sys.executable, 'test_vm_orchestrator.py'], capture_output=True, text=True)
+    
+    click.echo(result.stdout)
+    if result.stderr:
+        click.echo(result.stderr, err=True)
+    
+    sys.exit(result.returncode)
 
 def main():
     """Main CLI entry point"""

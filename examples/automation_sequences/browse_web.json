@@ -1,0 +1,87 @@
+[
+  {
+    "type": "send_key",
+    "key": "win",
+    "comment": "Open Start menu"
+  },
+  {
+    "type": "delay",
+    "seconds": 0.5
+  },
+  {
+    "type": "type_text",
+    "text": "chrome",
+    "delay": 0.1,
+    "comment": "Search for Chrome"
+  },
+  {
+    "type": "delay", 
+    "seconds": 0.5
+  },
+  {
+    "type": "send_key",
+    "key": "enter",
+    "comment": "Open Chrome"
+  },
+  {
+    "type": "delay",
+    "seconds": 3,
+    "comment": "Wait for Chrome to load"
+  },
+  {
+    "type": "send_key",
+    "key": "ctrl-l",
+    "comment": "Focus address bar"
+  },
+  {
+    "type": "delay",
+    "seconds": 0.5
+  },
+  {
+    "type": "type_text",
+    "text": "https://github.com",
+    "delay": 0.05,
+    "comment": "Type GitHub URL"
+  },
+  {
+    "type": "send_key",
+    "key": "enter",
+    "comment": "Navigate to GitHub"
+  },
+  {
+    "type": "delay",
+    "seconds": 3,
+    "comment": "Wait for page to load"
+  },
+  {
+    "type": "click",
+    "x": 700,
+    "y": 150,
+    "button": "left",
+    "comment": "Click search box (adjust coordinates as needed)"
+  },
+  {
+    "type": "type_text",
+    "text": "ux-mirror",
+    "delay": 0.05,
+    "comment": "Search for UX-MIRROR"
+  },
+  {
+    "type": "send_key",
+    "key": "enter",
+    "comment": "Perform search"
+  },
+  {
+    "type": "delay",
+    "seconds": 2,
+    "comment": "Wait for search results"
+  },
+  {
+    "type": "scroll",
+    "x": 640,
+    "y": 400,
+    "direction": "down",
+    "amount": 3,
+    "comment": "Scroll down to see more results"
+  }
+] 

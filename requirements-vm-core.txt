@@ -4,13 +4,13 @@
 # Core ML and Computer Vision
 torch>=2.1.0
 torchvision>=0.16.0
-opencv-python>=4.8.0
-Pillow>=10.0.0
-numpy>=1.24.0
+opencv-python>=4.8.0,<4.10.0
+Pillow>=10.0.0,<11.0.0
+numpy>=1.24.0,<2.0.0
 scipy>=1.11.0
 
 # Screen Capture and GUI Automation
-mss>=9.0.1  # Multi-screen screenshot
+mss>=9.0.0,<10.0.0  # Multi-screen screenshot
 pyautogui>=0.9.54  # GUI automation and screen capture
 pygetwindow>=0.0.9  # Window management
 
@@ -47,4 +47,7 @@ fastapi>=0.104.0
 uvicorn>=0.24.0
 
 # Async Processing
-nest-asyncio>=1.5.6 
+nest-asyncio>=1.5.6
+
+# UI Automation & Computer Vision
+pytesseract>=0.3.10,<1.0.0  # OCR for text detection 
