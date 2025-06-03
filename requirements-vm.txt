@@ -21,18 +21,18 @@ scikit-learn>=1.3.0
 pandas>=2.1.0
 
 # VM Management and Control
-pyvirtualbox>=2.2.0  # VirtualBox Python API
-paramiko>=3.3.0  # SSH for VM communication
+vboxapi>=1.0.0  # VirtualBox Python API
+paramiko>=3.0.0  # SSH for VM communication
 fabric>=3.2.0  # Remote execution over SSH
 pywinrm>=0.4.3  # Windows Remote Management
 
 # VNC/RDP Remote Desktop
-vncdotool>=1.2.0  # VNC client for screen control
+vncdotool>=1.0.0  # VNC client for screen control
 python-rdp>=0.1.0  # RDP client (if available)
 pyvnc>=1.0.0  # Alternative VNC implementation
 
 # Screen Capture and Display
-mss>=9.0.1  # Multi-screen screenshot
+mss>=9.0.0  # Multi-screen screenshot
 pygetwindow>=0.0.9  # Window management
 pyautogui>=0.9.54  # GUI automation and screen capture
 pyscreenshot>=3.1  # Cross-platform screenshots
@@ -111,4 +111,7 @@ pyjwt>=2.8.0
 
 # Hypervisor APIs (Windows-specific)
 wmi>=1.5.1  # Windows Management Instrumentation
-pywin32-ctypes>=0.2.2  # Windows API bindings 
+pywin32-ctypes>=0.2.2  # Windows API bindings
+
+# Added from the code block
+vboxapi>=1.0.0 

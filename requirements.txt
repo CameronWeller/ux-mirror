@@ -162,9 +162,13 @@ openai>=1.0.0
 anthropic>=0.18.0
 
 # API Server (optional but recommended)
-fastapi>=0.104.0
-uvicorn>=0.24.0
-pydantic>=2.0.0
+fastapi==0.68.1
+uvicorn==0.15.0
+pydantic==1.8.2
 
 # User input tracking
-pynput>=1.7.6 
+pynput>=1.7.6
+
+# Added from the code block
+python-multipart==0.0.5
+PyGithub==1.55 

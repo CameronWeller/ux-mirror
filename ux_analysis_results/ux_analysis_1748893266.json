@@ -1,0 +1,84 @@
+{
+  "timestamp": "2025-06-02T12:41:06.222924",
+  "source": "test_ui_screenshot.png",
+  "dimensions": {
+    "width": 800,
+    "height": 600
+  },
+  "detected_elements": [
+    {
+      "type": "button",
+      "bounds": {
+        "x": 100,
+        "y": 200,
+        "width": 120,
+        "height": 40
+      },
+      "confidence": 0.85,
+      "properties": {
+        "text": "Submit",
+        "color": "#007bff"
+      }
+    },
+    {
+      "type": "text",
+      "bounds": {
+        "x": 50,
+        "y": 50,
+        "width": 300,
+        "height": 30
+      },
+      "confidence": 0.92,
+      "properties": {
+        "content": "Welcome to our site",
+        "font_size": "24px"
+      }
+    },
+    {
+      "type": "image",
+      "bounds": {
+        "x": 400,
+        "y": 100,
+        "width": 200,
+        "height": 150
+      },
+      "confidence": 0.78,
+      "properties": {
+        "alt_text": "",
+        "aspect_ratio": "4:3"
+      }
+    }
+  ],
+  "ux_issues": [
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "element": {
+        "type": "image",
+        "bounds": {
+          "x": 400,
+          "y": 100,
+          "width": 200,
+          "height": 150
+        },
+        "confidence": 0.78,
+        "properties": {
+          "alt_text": "",
+          "aspect_ratio": "4:3"
+        }
+      },
+      "description": "Image missing alt text",
+      "fix": "Add descriptive alt text for screen readers"
+    },
+    {
+      "type": "contrast",
+      "severity": "medium",
+      "description": "Low contrast between text and background",
+      "location": {
+        "x": 50,
+        "y": 50
+      },
+      "fix": "Increase text color contrast to meet WCAG AA standards"
+    }
+  ]
+}

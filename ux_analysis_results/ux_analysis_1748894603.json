@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-06-02T13:03:23.245993",
+  "source": "test_game_of_life_screenshot.png",
+  "dimensions": {
+    "width": 800,
+    "height": 600
+  },
+  "detected_elements": [],
+  "ux_issues": [
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "Low contrast text (4.0:1)",
+      "location": {
+        "x": 100,
+        "y": 200,
+        "width": 120,
+        "height": 40
+      },
+      "fix": "Increase text contrast to meet WCAG AA standards",
+      "confidence": 1.0,
+      "metrics": {
+        "contrast_ratio": 3.979395412917911
+      }
+    },
+    {
+      "type": "hierarchy",
+      "severity": "low",
+      "description": "Insufficient text size variation",
+      "location": {
+        "x": 50,
+        "y": 50,
+        "width": 300,
+        "height": 30
+      },
+      "fix": "Increase size difference between headings and body text",
+      "confidence": 1.0,
+      "metrics": null
+    }
+  ]
+}

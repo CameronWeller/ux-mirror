@@ -1,0 +1,60 @@
+{
+    "name": "ux-mirror-rules",
+    "description": "Rules for UX-Mirror Python project",
+    "python": {
+        "version": "3.8",
+        "style": {
+            "formatter": "black",
+            "line_length": 88,
+            "docstring_style": "google"
+        },
+        "linting": {
+            "enabled": true,
+            "tools": ["pylint", "mypy"],
+            "pylint_config": {
+                "max-line-length": 88,
+                "disable": ["C0111"]
+            },
+            "mypy_config": {
+                "strict": true,
+                "ignore_missing_imports": true
+            }
+        },
+        "testing": {
+            "framework": "pytest",
+            "coverage": {
+                "enabled": true,
+                "minimum_coverage": 80
+            }
+        }
+    },
+    "file_patterns": {
+        "include": [
+            "**/*.py",
+            "requirements.txt",
+            "setup.py",
+            "pyproject.toml"
+        ],
+        "exclude": [
+            "**/__pycache__/**",
+            "**/*.pyc",
+            "**/.pytest_cache/**",
+            "**/.coverage",
+            "**/htmlcov/**"
+        ]
+    },
+    "dependencies": {
+        "requirements_file": "requirements.txt",
+        "virtual_env": ".venv"
+    },
+    "git": {
+        "ignore_patterns": [
+            "**/__pycache__/**",
+            "**/*.pyc",
+            "**/.pytest_cache/**",
+            "**/.coverage",
+            "**/htmlcov/**",
+            ".venv/**"
+        ]
+    }
+} 

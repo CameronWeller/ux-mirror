@@ -1,0 +1,65 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+layout(binding = 0) buffer CurrentState {
+    uint cells[];
+} current;
+
+layout(binding = 1) buffer NextState {
+    uint cells[];
+} next;
+
+layout(push_constant) uniform PushConstants {
+    uint gridSizeX;
+    uint gridSizeY;
+    uint gridSizeZ;
+} pc;
+
+uint getCell(uint x, uint y, uint z) {
+    // Wrap around grid boundaries
+    x = (x + pc.gridSizeX) % pc.gridSizeX;
+    y = (y + pc.gridSizeY) % pc.gridSizeY;
+    z = (z + pc.gridSizeZ) % pc.gridSizeZ;
+    
+    uint index = z * pc.gridSizeX * pc.gridSizeY + y * pc.gridSizeX + x;
+    return current.cells[index];
+}
+
+void main() {
+    uvec3 pos = gl_GlobalInvocationID;
+    if (pos.x >= pc.gridSizeX || pos.y >= pc.gridSizeY || pos.z >= pc.gridSizeZ) {
+        return;
+    }
+    
+    uint index = pos.z * pc.gridSizeX * pc.gridSizeY + pos.y * pc.gridSizeX + pos.x;
+    
+    // Count live neighbors
+    uint liveNeighbors = 0;
+    for (int dz = -1; dz <= 1; dz++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 && dy == 0 && dz == 0) continue;
+                liveNeighbors += getCell(pos.x + dx, pos.y + dy, pos.z + dz);
+            }
+        }
+    }
+    
+    uint currentState = current.cells[index];
+    uint nextState = 0;
+    
+    // 3D Game of Life rules
+    if (currentState == 1) {
+        // Survival: cell survives if it has 4-6 neighbors
+        if (liveNeighbors >= 4 && liveNeighbors <= 6) {
+            nextState = 1;
+        }
+    } else {
+        // Birth: dead cell becomes alive if it has exactly 4 neighbors
+        if (liveNeighbors == 4) {
+            nextState = 1;
+        }
+    }
+    
+    next.cells[index] = nextState;
+} 

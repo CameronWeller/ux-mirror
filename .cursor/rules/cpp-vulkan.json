@@ -1,0 +1,89 @@
+{
+    "name": "cpp-vulkan-rules",
+    "description": "Rules for C++ Vulkan HIP Engine project",
+    "cpp": {
+        "standard": "c++17",
+        "style": {
+            "formatter": "clang-format",
+            "style": "file",
+            "based_on_style": "Google"
+        },
+        "linting": {
+            "enabled": true,
+            "tools": ["clang-tidy", "cppcheck"],
+            "clang_tidy_checks": [
+                "modernize-*",
+                "performance-*",
+                "readability-*",
+                "bugprone-*",
+                "cppcoreguidelines-*"
+            ],
+            "cppcheck_checks": [
+                "all",
+                "style",
+                "performance",
+                "portability"
+            ]
+        },
+        "testing": {
+            "framework": "gtest",
+            "coverage": {
+                "enabled": true,
+                "minimum_coverage": 80
+            }
+        }
+    },
+    "file_patterns": {
+        "include": [
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl",
+            "**/*.glsl",
+            "**/*.vert",
+            "**/*.frag",
+            "**/*.comp",
+            "CMakeLists.txt",
+            "**/*.cmake"
+        ],
+        "exclude": [
+            "**/build/**",
+            "**/bin/**",
+            "**/lib/**",
+            "**/*.o",
+            "**/*.obj",
+            "**/*.exe",
+            "**/*.dll",
+            "**/*.so",
+            "**/*.dylib",
+            "**/*.lib",
+            "**/*.a",
+            "**/*.spv",
+            "**/*.spirv"
+        ]
+    },
+    "dependencies": {
+        "cmake_minimum_version": "3.20",
+        "required_packages": [
+            "Vulkan",
+            "HIP"
+        ]
+    },
+    "git": {
+        "ignore_patterns": [
+            "**/build/**",
+            "**/bin/**",
+            "**/lib/**",
+            "**/*.o",
+            "**/*.obj",
+            "**/*.exe",
+            "**/*.dll",
+            "**/*.so",
+            "**/*.dylib",
+            "**/*.lib",
+            "**/*.a",
+            "**/*.spv",
+            "**/*.spirv"
+        ]
+    }
+} 

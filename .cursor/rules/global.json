@@ -1,0 +1,51 @@
+{
+    "name": "global-rules",
+    "description": "Global rules for all projects",
+    "editor": {
+        "format_on_save": true,
+        "trim_trailing_whitespace": true,
+        "insert_final_newline": true,
+        "end_of_line": "lf"
+    },
+    "git": {
+        "commit_message_format": "conventional",
+        "branch_naming": {
+            "feature": "feature/",
+            "bugfix": "fix/",
+            "hotfix": "hotfix/",
+            "release": "release/"
+        }
+    },
+    "documentation": {
+        "required_files": [
+            "README.md",
+            "LICENSE",
+            "CHANGELOG.md"
+        ],
+        "code_documentation": {
+            "required": true,
+            "style": "file"
+        }
+    },
+    "security": {
+        "secrets": {
+            "scan_on_commit": true,
+            "exclude_patterns": [
+                "**/node_modules/**",
+                "**/venv/**",
+                "**/.venv/**",
+                "**/build/**",
+                "**/dist/**"
+            ]
+        }
+    },
+    "project_boundaries": {
+        "enforce_separation": true,
+        "cross_project_imports": {
+            "allowed": false,
+            "exceptions": [
+                "api_interfaces"
+            ]
+        }
+    }
+} 

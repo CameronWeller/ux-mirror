@@ -107,18 +107,31 @@ class VirtualBoxManager:
         self.vbox = None
         self.session = None
         try:
+            # Initialize VirtualBox API with correct parameters (no mgrType)
             self.vbox_manager = vboxapi.VirtualBoxManager(None, None)
-            self.vbox = self.vbox_manager.vbox
+            self.vbox = self.vbox_manager.getVirtualBox()
+            self.session = self.vbox_manager.getSessionObject(self.vbox)
             logger.info("VirtualBox API initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize VirtualBox API: {e}")
             raise
     
+    def getVirtualBox(self):
+        """Get VirtualBox instance"""
+        return self.vbox
+    
+    def getSession(self):
+        """Get VirtualBox session"""
+        return self.session
+    
     def create_vm(self, config: VMConfiguration) -> str:
         """Create a new VM with specified configuration"""
         try:
+            vbox = self.vbox_manager.getVirtualBox()
+            session = self.vbox_manager.getSessionObject(vbox)
+            
             # Create VM
-            vm = self.vbox.createMachine(
+            vm = vbox.createMachine(
                 "", config.name, [], config.os_type, ""
             )
             
@@ -137,18 +150,17 @@ class VirtualBoxManager:
                 vm.setAccelerate3DEnabled(True)
             
             # Register VM
-            self.vbox.registerMachine(vm)
+            vbox.registerMachine(vm)
             
             # Configure storage
-            session = self.vbox_manager.getSessionObject(self.vbox)
             vm.lockMachine(session, self.vbox_manager.constants.LockType_Write)
             
             mutable_vm = session.machine
             
             # Create hard disk
-            medium = self.vbox.createMedium("VDI", f"{config.name}.vdi", 
-                                          self.vbox_manager.constants.AccessMode_ReadWrite,
-                                          self.vbox_manager.constants.DeviceType_HardDisk)
+            medium = vbox.createMedium("VDI", f"{config.name}.vdi", 
+                                     self.vbox_manager.constants.AccessMode_ReadWrite,
+                                     self.vbox_manager.constants.DeviceType_HardDisk)
             
             # Create storage controller
             controller = mutable_vm.addStorageController(
@@ -715,35 +727,45 @@ class VMOrchestrator:
         """Discover and register existing VMs"""
         try:
             # Get list of VMs from VirtualBox
-            for vm in self.vbox_manager.vbox.machines:
-                vm_info = self.vbox_manager.get_vm_info(vm.name)
-                if vm_info:
-                    # Create VMInfo object
-                    vm_config = VMConfiguration(
-                        name=vm_info["name"],
-                        memory_mb=vm_info["memory_mb"],
-                        cpu_cores=vm_info["cpu_count"]
-                    )
-                    
-                    managed_vm = VMInfo(
-                        vm_id=vm_info["uuid"],
-                        name=vm_info["name"],
-                        state=VMState.POWERED_OFF,  # Will be updated in health check
-                        configuration=vm_config,
-                        uuid=vm_info["uuid"],
-                        session_id=None,
-                        vnc_port=None,
-                        rdp_port=None,
-                        ssh_port=None,
-                        ip_address=None,
-                        creation_time=datetime.now(),
-                        last_activity=datetime.now(),
-                        snapshots=vm_info["snapshots"],
-                        performance_metrics={}
-                    )
-                    
-                    self.managed_vms[vm_info["name"]] = managed_vm
-                    
+            vbox = self.vbox_manager.getVirtualBox()
+            for vm in vbox.machines:
+                vm_info = {
+                    "name": vm.name,
+                    "uuid": vm.id,
+                    "state": vm.state,
+                    "memory_mb": vm.memorySize,
+                    "cpu_count": vm.CPUCount,
+                    "vram_mb": vm.VRAMSize,
+                    "os_type": vm.OSTypeId,
+                    "snapshots": [snapshot.name for snapshot in vm.snapshots]
+                }
+                
+                # Create VMInfo object
+                vm_config = VMConfiguration(
+                    name=vm_info["name"],
+                    memory_mb=vm_info["memory_mb"],
+                    cpu_cores=vm_info["cpu_count"]
+                )
+                
+                managed_vm = VMInfo(
+                    vm_id=vm_info["uuid"],
+                    name=vm_info["name"],
+                    state=VMState(vm_info["state"]),
+                    configuration=vm_config,
+                    uuid=vm_info["uuid"],
+                    session_id=None,
+                    vnc_port=None,
+                    rdp_port=None,
+                    ssh_port=None,
+                    ip_address=None,
+                    creation_time=datetime.now(),
+                    last_activity=datetime.now(),
+                    snapshots=vm_info["snapshots"],
+                    performance_metrics={}
+                )
+                
+                self.managed_vms[vm_info["name"]] = managed_vm
+                
             logger.info(f"Discovered {len(self.managed_vms)} existing VMs")
             
         except Exception as e:

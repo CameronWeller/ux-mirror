@@ -1,0 +1,50 @@
+{
+    "version": "1.0",
+    "projects": {
+        "ux-mirror": {
+            "root": ".",
+            "type": "python",
+            "rules": [
+                ".cursor/rules/ux-mirror.json"
+            ],
+            "exclude_patterns": [
+                "cpp-vulkan-hip-engine/**",
+                "**/__pycache__/**",
+                "**/*.pyc",
+                "**/.pytest_cache/**",
+                "**/.coverage",
+                "**/htmlcov/**"
+            ]
+        },
+        "cpp-vulkan-hip-engine": {
+            "root": "cpp-vulkan-hip-engine",
+            "type": "cpp",
+            "rules": [
+                ".cursor/rules/cpp-vulkan.json"
+            ],
+            "exclude_patterns": [
+                "**/build/**",
+                "**/bin/**",
+                "**/lib/**",
+                "**/*.o",
+                "**/*.obj",
+                "**/*.exe",
+                "**/*.dll",
+                "**/*.so",
+                "**/*.dylib",
+                "**/*.lib",
+                "**/*.a"
+            ]
+        }
+    },
+    "global_rules": [
+        ".cursor/rules/global.json"
+    ],
+    "editor": {
+        "format_on_save": true,
+        "default_formatter": {
+            "python": "black",
+            "cpp": "clang-format"
+        }
+    }
+} 
