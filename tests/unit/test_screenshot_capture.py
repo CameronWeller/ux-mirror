@@ -21,10 +21,12 @@ class TestScreenshotCapture(unittest.TestCase):
         self.capture = ScreenshotCapture(output_dir=self.temp_dir, quality=85)
     
     @patch('src.capture.screenshot.ensure_directory')
-    def test_init_creates_output_directory(self, mock_ensure_dir):
+    def test_init_creates_output_directory(self):
         """Test that initialization creates output directory."""
-        ScreenshotCapture()
-        mock_ensure_dir.assert_called_once()
+        with patch.object(Path, 'mkdir') as mock_mkdir:
+            capture = ScreenshotCapture()
+            mock_mkdir.assert_called_once_with(exist_ok=True)
+            assert capture.quality == 85
     
     @patch('src.capture.screenshot.ImageGrab.grab')
     @patch('src.capture.screenshot.datetime')
@@ -186,38 +188,47 @@ class TestScreenshotCapture(unittest.TestCase):
         assert captures['files'][0]['size_mb'] == 1.0
     
     @patch.object(Path, 'glob')
-    @patch.object(Path, 'unlink')
-    def test_clean_old_captures(self, mock_unlink, mock_glob):
+    def test_clean_old_captures(self, mock_glob):
         """Test cleaning old captures."""
-        # Mock files with proper stat method
-        files = []
+        # Create 10 mock files (5 PNG + 5 JSON) with different modification times
+        all_files = []
+        
+        # Create PNG files
         for i in range(5):
             mock_file = Mock()
             mock_file.name = f"file_{i}.png"
             mock_stat_result = Mock()
             mock_stat_result.st_mtime = i  # Different timestamps
             mock_file.stat.return_value = mock_stat_result
-            files.append(mock_file)
-
-        # Also mock corresponding JSON files
-        json_files = []
+            mock_file.unlink = Mock()
+            all_files.append(mock_file)
+        
+        # Create JSON files
         for i in range(5):
-            mock_json = Mock()
-            mock_json.name = f"file_{i}.json"
+            mock_file = Mock()
+            mock_file.name = f"file_{i}.json"
             mock_stat_result = Mock()
-            mock_stat_result.st_mtime = i
-            mock_json.stat.return_value = mock_stat_result
-            json_files.append(mock_json)
+            mock_stat_result.st_mtime = i + 5  # Different timestamps
+            mock_file.stat.return_value = mock_stat_result
+            mock_file.unlink = Mock()
+            all_files.append(mock_file)
 
         # Mock glob to return PNG files first, then JSON files
-        mock_glob.side_effect = [files, json_files]
+        mock_glob.side_effect = [all_files[:5], all_files[5:]]
 
         deleted_count = self.capture.clean_old_captures(keep_count=2)
 
-        # With 5 PNG + 5 JSON = 10 files total, keep_count=2 means keep 4 files (2*2)
+        # With 10 files total, keep_count=2 means keep 4 files (2*2)
         # So should delete 6 files
         assert deleted_count == 6
-        assert mock_unlink.call_count == 6
+        
+        # The implementation sorts all files by mtime and keeps the newest 4
+        # Files with mtime 9,8,7,6 should be kept (newest 4)
+        # Files with mtime 5,4,3,2,1,0 should be deleted (oldest 6)
+        
+        # Count how many unlink calls were made
+        total_unlink_calls = sum(1 for f in all_files if f.unlink.called)
+        assert total_unlink_calls == 6
     
     def test_load_metadata_file_not_exists(self):
         """Test load_metadata when file doesn't exist."""
