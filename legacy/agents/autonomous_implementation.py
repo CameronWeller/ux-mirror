@@ -18,9 +18,27 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import websockets
-import torch
-import transformers
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+# Make PyTorch and transformers imports optional
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
+    logging.warning("PyTorch not available - using template-based code generation")
+
+try:
+    import transformers
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    transformers = None
+    AutoTokenizer = None
+    AutoModelForCausalLM = None
+    TRANSFORMERS_AVAILABLE = False
+    logging.warning("Transformers not available - using template-based code generation")
+
 import ast
 import subprocess
 import os
@@ -65,8 +83,14 @@ class AutonomousImplementationAgent:
         self.orchestrator_port = orchestrator_port
         self.websocket = None
         
-        # GPU setup
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # GPU setup - handle case when PyTorch is not available
+        if TORCH_AVAILABLE:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.use_gpu = torch.cuda.is_available()
+        else:
+            self.device = None
+            self.use_gpu = False
+            
         self.model = None
         self.tokenizer = None
         
@@ -97,7 +121,8 @@ const accessibilityEnhancement = {{
 """
         }
         
-        logger.info(f"Autonomous Implementation Agent initialized on {self.device}")
+        device_info = f"{self.device}" if self.device else "Template-based fallback"
+        logger.info(f"Autonomous Implementation Agent initialized on {device_info}")
     
     async def start(self):
         """Start the autonomous implementation agent"""
@@ -122,6 +147,10 @@ const accessibilityEnhancement = {{
     async def _initialize_code_model(self):
         """Initialize the code generation model"""
         try:
+            if not TRANSFORMERS_AVAILABLE or not TORCH_AVAILABLE:
+                logger.info("Using template-based code generation (transformers/torch not available)")
+                return
+                
             logger.info("Loading code generation model...")
             
             # Use a lightweight but capable code model
@@ -130,7 +159,7 @@ const accessibilityEnhancement = {{
             # In production, use something like:
             # model_name = "Salesforce/codegen-350M-mono"
             
-            if torch.cuda.is_available():
+            if self.use_gpu:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_name,
@@ -512,7 +541,7 @@ function manageFocus() {
         while True:
             try:
                 gpu_usage = 0.0
-                if torch.cuda.is_available():
+                if self.use_gpu:
                     gpu_usage = torch.cuda.memory_allocated() / torch.cuda.max_memory_allocated()
                 
                 heartbeat = {

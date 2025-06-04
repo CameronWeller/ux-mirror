@@ -1,0 +1,32 @@
+{
+  "before_file": "20250604_132331_469_before.png",
+  "after_file": "20250604_132337_148_after.png",
+  "timestamp": "2025-06-04T13:23:44.173564",
+  "results": {
+    "ui_changed": false,
+    "change_score": 0.00997283445877974,
+    "response_time_ms": 5675.531,
+    "response_acceptable": false,
+    "visual_issues": [
+      "Screen appears mostly black (potential loading issue)"
+    ],
+    "content_validation": {
+      "before_content_valid": true,
+      "after_content_valid": true,
+      "before_description": "No working AI vision API available",
+      "after_description": "No working AI vision API available",
+      "expectations_met": true,
+      "issues": [],
+      "api_used": null
+    },
+    "ux_quality": {
+      "score": 30,
+      "level": "POOR",
+      "issues": [
+        "Slow response time: 5676ms",
+        "No visible UI change detected",
+        "Screen appears mostly black (potential loading issue)"
+      ]
+    }
+  }
+}
