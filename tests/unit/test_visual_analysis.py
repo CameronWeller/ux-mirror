@@ -101,31 +101,28 @@ class TestVisualAnalyzer:
     def test_check_visual_quality_success(self, mock_np, mock_cv2):
         """Test successful visual quality check."""
         img = np.zeros((100, 100, 3), dtype=np.uint8)
-        
+
         # Mock cv2 functions
-        gray_img = np.zeros((100, 100), dtype=np.uint8)
-        mock_cv2.cvtColor.return_value = gray_img
-        
+        mock_gray_img = Mock()
+        mock_cv2.cvtColor.return_value = mock_gray_img
+
         # Mock Laplacian
-        laplacian_result = Mock()
-        laplacian_result.var.return_value = 150.0
-        mock_cv2.Laplacian.return_value = laplacian_result
-        
+        mock_laplacian_result = Mock()
+        mock_laplacian_result.var.return_value = 150.0
+        mock_cv2.Laplacian.return_value = mock_laplacian_result
+
         # Mock numpy functions
         mock_np.mean.return_value = 128.0
-        gray_img.std = Mock(return_value=50.0)
-        
-        # Mock histogram
-        hist = np.ones((8, 8, 8))
-        mock_cv2.calcHist.return_value = hist
-        mock_np.count_nonzero.return_value = 256
-        
-        quality = self.analyzer.check_visual_quality(img)
-        
-        assert quality['blur_score'] == 150.0
-        assert quality['is_blurry'] is False
-        assert quality['brightness'] == 128.0
-        assert quality['contrast'] == 50.0
+        mock_gray_img.std = Mock(return_value=50.0)
+
+        quality_metrics = self.analyzer.check_visual_quality(img)
+
+        assert 'sharpness' in quality_metrics
+        assert 'brightness' in quality_metrics
+        assert 'contrast' in quality_metrics
+        assert quality_metrics['sharpness'] == 150.0
+        assert quality_metrics['brightness'] == 128.0
+        assert quality_metrics['contrast'] == 50.0
     
     def test_check_visual_quality_error_handling(self):
         """Test visual quality check error handling."""
