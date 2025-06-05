@@ -1,0 +1,69 @@
+{
+  "game_ux_testing": {
+    "session_config": {
+      "feedback_ratio": "3:1",
+      "session_duration": 60,
+      "analysis_intervals": [15, 30, 45, 60],
+      "comparison_baseline": "initial_state"
+    },
+    "game_specific_metrics": {
+      "ui_responsiveness": {
+        "target_fps": 60,
+        "input_lag_threshold": 16.67,
+        "ui_update_frequency": "real_time"
+      },
+      "visual_clarity": {
+        "text_readability_threshold": 0.8,
+        "hud_element_visibility": 0.9,
+        "contrast_ratio_minimum": 4.5
+      },
+      "accessibility": {
+        "colorblind_compatibility": true,
+        "subtitle_support": true,
+        "ui_scaling_options": true,
+        "button_size_minimum": 44
+      },
+      "engagement_tracking": {
+        "attention_heatmaps": true,
+        "interaction_flow_analysis": true,
+        "difficulty_spike_detection": true,
+        "menu_navigation_efficiency": true
+      }
+    },
+    "analysis_focus_areas": [
+      "HUD elements positioning and visibility",
+      "Menu navigation flow and efficiency", 
+      "Interactive element feedback clarity",
+      "Performance impact on user experience",
+      "Accessibility compliance for gaming",
+      "Cross-platform UI consistency"
+    ],
+    "feedback_sessions": {
+      "session_1": {
+        "focus": "Initial UI assessment",
+        "duration": 15,
+        "metrics": ["visual_clarity", "ui_responsiveness"]
+      },
+      "session_2": {
+        "focus": "Interaction flow analysis", 
+        "duration": 15,
+        "metrics": ["engagement_tracking", "navigation_efficiency"]
+      },
+      "session_3": {
+        "focus": "Accessibility and performance",
+        "duration": 15, 
+        "metrics": ["accessibility", "performance_impact"]
+      },
+      "session_4": {
+        "focus": "Comprehensive analysis and recommendations",
+        "duration": 15,
+        "metrics": ["all_combined", "pattern_analysis"]
+      }
+    },
+    "ai_analysis_prompts": {
+      "game_specific": "Analyze this gaming interface focusing on player experience, visual hierarchy, and interactive feedback. Consider gaming-specific UX principles like immediate feedback, clear affordances, and minimal cognitive load during gameplay.",
+      "performance_gaming": "Evaluate the performance characteristics of this game UI, focusing on frame rate impact, input responsiveness, and visual smoothness that directly affects player experience.",
+      "accessibility_gaming": "Assess gaming accessibility features including colorblind support, subtitle options, UI scaling, and alternative input methods for inclusive gaming experiences."
+    }
+  }
+} 

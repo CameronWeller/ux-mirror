@@ -20,7 +20,6 @@ class TestScreenshotCapture(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.capture = ScreenshotCapture(output_dir=self.temp_dir, quality=85)
     
-    @patch('src.capture.screenshot.ensure_directory')
     def test_init_creates_output_directory(self):
         """Test that initialization creates output directory."""
         with patch.object(Path, 'mkdir') as mock_mkdir:

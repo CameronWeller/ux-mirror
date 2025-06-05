@@ -114,15 +114,22 @@ class TestVisualAnalyzer:
         # Mock numpy functions
         mock_np.mean.return_value = 128.0
         mock_gray_img.std = Mock(return_value=50.0)
+        
+        # Mock histogram
+        hist = np.ones((8, 8, 8))
+        mock_cv2.calcHist.return_value = hist
+        mock_np.count_nonzero.return_value = 256
 
         quality_metrics = self.analyzer.check_visual_quality(img)
 
-        assert 'sharpness' in quality_metrics
+        assert 'blur_score' in quality_metrics
         assert 'brightness' in quality_metrics
         assert 'contrast' in quality_metrics
-        assert quality_metrics['sharpness'] == 150.0
+        assert 'color_diversity' in quality_metrics
+        assert quality_metrics['blur_score'] == 150.0
         assert quality_metrics['brightness'] == 128.0
         assert quality_metrics['contrast'] == 50.0
+        assert quality_metrics['is_blurry'] is False
     
     def test_check_visual_quality_error_handling(self):
         """Test visual quality check error handling."""
