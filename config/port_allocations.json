@@ -1,0 +1,23 @@
+{
+  "test_service_1": {
+    "port": 8765,
+    "service": "test_service_1",
+    "allocated_at": 1749247574.4906292,
+    "process_id": null,
+    "is_active": true
+  },
+  "test_service_2": {
+    "port": 8765,
+    "service": "test_service_2",
+    "allocated_at": 1749247574.4935076,
+    "process_id": null,
+    "is_active": true
+  },
+  "core_orchestrator": {
+    "port": 8765,
+    "service": "core_orchestrator",
+    "allocated_at": 1749247581.4718103,
+    "process_id": null,
+    "is_active": true
+  }
+}

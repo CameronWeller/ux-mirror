@@ -73,7 +73,15 @@ class CoreOrchestrator:
     
     def __init__(self, host: str = "localhost", port: int = 8765):
         self.host = host
-        self.port = port
+        
+        # Use port manager for reliable port allocation
+        try:
+            from core.port_manager import allocate_service_port
+            self.port = allocate_service_port("core_orchestrator", port)
+        except ImportError:
+            # Fallback if port manager not available
+            self.port = port
+            
         self.running = False
         
         # Agent management
@@ -106,7 +114,7 @@ class CoreOrchestrator:
         self.start_time = datetime.now()
         self.total_messages_processed = 0
         
-        logger.info("Core Orchestrator initialized")
+        logger.info(f"Core Orchestrator initialized on port {self.port}")
     
     async def start(self):
         """Start the Core Orchestrator"""
@@ -145,7 +153,7 @@ class CoreOrchestrator:
         agent_id = None
         
         try:
-            logger.info(f"New agent connection from {websocket.remote_address}")
+            logger.info(f"New agent connection from {websocket.remote_address} (path: {path})")
             
             async for message in websocket:
                 try:
@@ -163,8 +171,10 @@ class CoreOrchestrator:
                         
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON from agent: {e}")
+                    await websocket.send(json.dumps({"status": "error", "message": "Invalid JSON"}))
                 except Exception as e:
                     logger.error(f"Error processing agent message: {e}")
+                    await websocket.send(json.dumps({"status": "error", "message": str(e)}))
                     
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Agent {agent_id or 'unknown'} disconnected")
@@ -172,7 +182,8 @@ class CoreOrchestrator:
             logger.error(f"Agent connection error: {e}")
         finally:
             # Clean up agent connection
-            if agent_id:
+            if agent_id and agent_id in self.agent_connections:
+                del self.agent_connections[agent_id]
                 self._remove_agent(agent_id)
     
     async def _process_agent_message(self, data: Dict[str, Any], 

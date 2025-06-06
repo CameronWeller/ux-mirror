@@ -19,7 +19,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import logging
 
 # Set up logging
@@ -42,6 +42,7 @@ class UXMirrorMonitor:
         self.running_processes = {}
         self.monitoring_active = False
         self.screenshots_dir = "game_screenshots"
+        self.feedback_log = []  # Store manual feedback for integration with game testing
         
         # Create UI
         self.create_ui()
@@ -99,19 +100,36 @@ class UXMirrorMonitor:
         
         self.game_button = ttk.Button(button_frame, text="🎮 Start Game Test", 
                                      command=self.start_game_testing)
-        self.game_button.pack(side=tk.LEFT)
+        self.game_button.pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.screenshot_button = ttk.Button(button_frame, text="📸 Screenshot", 
+                                          command=self.take_manual_screenshot)
+        self.screenshot_button.pack(side=tk.LEFT)
+        
+        # Feedback input section
+        feedback_frame = ttk.LabelFrame(main_frame, text="Manual Feedback", padding="5")
+        feedback_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 5))
+        feedback_frame.columnconfigure(1, weight=1)
+        
+        ttk.Label(feedback_frame, text="Message:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
+        self.feedback_entry = ttk.Entry(feedback_frame, width=40)
+        self.feedback_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 5))
+        
+        self.feedback_screenshot_button = ttk.Button(feedback_frame, text="📸 Screenshot + Log", 
+                                                   command=self.take_feedback_screenshot)
+        self.feedback_screenshot_button.grid(row=0, column=2, sticky=tk.E)
         
         # Recent activity log
         log_frame = ttk.LabelFrame(main_frame, text="Recent Activity", padding="5")
-        log_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S))
+        log_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S))
         log_frame.columnconfigure(0, weight=1)
         log_frame.rowconfigure(0, weight=1)
         
-        self.activity_log = scrolledtext.ScrolledText(log_frame, height=8, width=50)
+        self.activity_log = scrolledtext.ScrolledText(log_frame, height=6, width=50)
         self.activity_log.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights for resizing
-        main_frame.rowconfigure(3, weight=1)
+        main_frame.rowconfigure(4, weight=1)
         
         # Add initial log message
         self.log_activity("🎯 UX-MIRROR Monitor started")
@@ -219,6 +237,146 @@ class UXMirrorMonitor:
             
         except Exception as e:
             self.log_activity(f"❌ Error starting game testing: {e}")
+    
+    def take_manual_screenshot(self):
+        """Take a manual screenshot and analyze it"""
+        try:
+            self.log_activity("📸 Taking manual screenshot...")
+            
+            # Import screenshot analyzer
+            import sys
+            sys.path.append(os.getcwd())
+            from core.screenshot_analyzer import ScreenshotAnalyzer
+            
+            # Take screenshot
+            analyzer = ScreenshotAnalyzer()
+            
+            # Use asyncio to run the async function
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                screenshot_path = loop.run_until_complete(analyzer.capture_screenshot())
+                
+                if screenshot_path and os.path.exists(screenshot_path):
+                    self.log_activity(f"✅ Screenshot saved: {os.path.basename(screenshot_path)}")
+                    
+                    # Analyze the screenshot
+                    self.log_activity("🔍 Analyzing screenshot...")
+                    analysis = loop.run_until_complete(analyzer.analyze_image(screenshot_path))
+                    
+                    # Log analysis results
+                    if analysis:
+                        quality = analysis.get('quality_score', 0) * 100
+                        ui_elements = len(analysis.get('ui_elements', []))
+                        self.log_activity(f"📊 Quality: {quality:.1f}%, UI Elements: {ui_elements}")
+                        
+                        # Show accessibility issues if any
+                        issues = analysis.get('accessibility_issues', [])
+                        if issues:
+                            self.log_activity(f"♿ Accessibility issues: {len(issues)}")
+                        else:
+                            self.log_activity("♿ No accessibility issues found")
+                    
+                else:
+                    self.log_activity("❌ Failed to capture screenshot")
+                    
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            self.log_activity(f"❌ Error taking screenshot: {e}")
+            import traceback
+            logger.error(f"Screenshot error: {traceback.format_exc()}")
+    
+    def take_feedback_screenshot(self):
+        """Take a screenshot with user feedback message"""
+        try:
+            feedback_message = self.feedback_entry.get().strip()
+            if not feedback_message:
+                self.log_activity("⚠️ Please enter a feedback message first")
+                return
+            
+            self.log_activity(f"📸 Taking feedback screenshot...")
+            self.log_activity(f"💬 Message: \"{feedback_message}\"")
+            
+            # Import screenshot analyzer
+            import sys
+            sys.path.append(os.getcwd())
+            from core.screenshot_analyzer import ScreenshotAnalyzer
+            
+            # Take screenshot
+            analyzer = ScreenshotAnalyzer()
+            
+            # Use asyncio to run the async function
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                screenshot_path = loop.run_until_complete(analyzer.capture_screenshot())
+                
+                if screenshot_path and os.path.exists(screenshot_path):
+                    # Analyze the screenshot
+                    analysis = loop.run_until_complete(analyzer.analyze_image(screenshot_path))
+                    
+                    # Create feedback entry
+                    feedback_entry = {
+                        "timestamp": datetime.now().isoformat(),
+                        "type": "manual_feedback",
+                        "message": feedback_message,
+                        "screenshot_path": screenshot_path,
+                        "analysis": analysis,
+                        "session_context": "manual_monitoring"
+                    }
+                    
+                    # Store feedback for integration with game testing
+                    self.feedback_log.append(feedback_entry)
+                    
+                    # Save feedback to JSON file for persistence
+                    self.save_feedback_log()
+                    
+                    # Log results
+                    if analysis:
+                        quality = analysis.get('quality_score', 0) * 100
+                        ui_elements = len(analysis.get('ui_elements', []))
+                        self.log_activity(f"✅ Feedback logged: Quality {quality:.1f}%, {ui_elements} UI elements")
+                    else:
+                        self.log_activity(f"✅ Feedback logged with screenshot")
+                    
+                    # Clear the feedback entry
+                    self.feedback_entry.delete(0, tk.END)
+                    
+                else:
+                    self.log_activity("❌ Failed to capture feedback screenshot")
+                    
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            self.log_activity(f"❌ Error taking feedback screenshot: {e}")
+            import traceback
+            logger.error(f"Feedback screenshot error: {traceback.format_exc()}")
+    
+    def save_feedback_log(self):
+        """Save feedback log to JSON file"""
+        try:
+            feedback_file = Path(self.screenshots_dir) / "manual_feedback_log.json"
+            feedback_file.parent.mkdir(exist_ok=True)
+            
+            import json
+            with open(feedback_file, 'w') as f:
+                json.dump(self.feedback_log, f, indent=2)
+                
+            logger.info(f"Feedback log saved: {feedback_file}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save feedback log: {e}")
+    
+    def get_recent_feedback(self, limit: int = 5) -> List[Dict]:
+        """Get recent feedback entries for integration with game testing"""
+        return self.feedback_log[-limit:] if self.feedback_log else []
     
     def stop_all_processes(self):
         """Stop all UX-MIRROR related processes"""

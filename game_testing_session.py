@@ -404,6 +404,16 @@ GAME UX ANALYSIS - Iteration {self.session.current_iteration}
         print(f"\n🎯 Please provide your feedback on the game UX:")
         print(f"   (Press Enter to skip any question)\n")
         
+        # Check for any manual feedback from monitoring window
+        manual_feedback = self._load_manual_feedback()
+        if manual_feedback:
+            print(f"📋 Found {len(manual_feedback)} manual feedback entries:")
+            for i, feedback in enumerate(manual_feedback[-3:], 1):  # Show last 3
+                timestamp = feedback.get('timestamp', 'Unknown time')
+                message = feedback.get('message', 'No message')
+                print(f"   {i}. [{timestamp[:19]}] {message}")
+            print()
+        
         feedback = {}
         
         # Game-specific feedback questions
@@ -436,7 +446,33 @@ GAME UX ANALYSIS - Iteration {self.session.current_iteration}
                 logger.warning(f"Error collecting feedback for {key}: {e}")
         
         print(f"\n✅ Feedback collected. Continuing with testing...\n")
+        
+        # Include manual feedback if available
+        manual_feedback = self._load_manual_feedback()
+        if manual_feedback:
+            feedback['manual_feedback_entries'] = len(manual_feedback)
+            feedback['recent_manual_feedback'] = [
+                {
+                    'timestamp': fb.get('timestamp'),
+                    'message': fb.get('message'),
+                    'quality_score': fb.get('analysis', {}).get('quality_score', 0)
+                }
+                for fb in manual_feedback[-3:]  # Include last 3 manual entries
+            ]
+        
         return feedback
+    
+    def _load_manual_feedback(self) -> List[Dict]:
+        """Load manual feedback from monitoring window"""
+        try:
+            feedback_file = Path("game_screenshots") / "manual_feedback_log.json"
+            if feedback_file.exists():
+                with open(feedback_file, 'r') as f:
+                    return json.load(f)
+            return []
+        except Exception as e:
+            logger.warning(f"Could not load manual feedback: {e}")
+            return []
     
     async def _generate_session_summary(self):
         """Generate comprehensive session summary"""

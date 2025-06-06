@@ -449,7 +449,11 @@ def handle_game_command(args, config):
         import os
         
         # Add the project root to Python path
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, project_root)
+        
+        # Also add current working directory
+        sys.path.insert(0, os.getcwd())
         
         from game_testing_session import GameUXTestingController
         
