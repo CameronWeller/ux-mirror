@@ -2,9 +2,14 @@
   "game_ux_testing": {
     "session_config": {
       "feedback_ratio": "3:1",
+      "feedback_description": "User feedback session every 3 iteration loops",
+      "total_iterations": 12,
+      "iterations_per_feedback": 3,
       "session_duration": 60,
       "analysis_intervals": [15, 30, 45, 60],
-      "comparison_baseline": "initial_state"
+      "comparison_baseline": "initial_state",
+      "screenshot_display": true,
+      "save_analysis_overlays": true
     },
     "game_specific_metrics": {
       "ui_responsiveness": {

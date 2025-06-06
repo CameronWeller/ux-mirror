@@ -1,0 +1,74 @@
+{
+  "vulkan_3d_gameoflife_testing": {
+    "session_config": {
+      "feedback_ratio": "3:1",
+      "session_duration": 60,
+      "analysis_intervals": [15, 30, 45, 60],
+      "vulkan_specific": true,
+      "target_application": "Vulkan 3D Game of Life"
+    },
+    "vulkan_specific_metrics": {
+      "graphics_performance": {
+        "target_fps": 60,
+        "vulkan_render_time": 16.67,
+        "gpu_memory_usage": "track",
+        "command_buffer_efficiency": true,
+        "pipeline_state_changes": "monitor"
+      },
+      "3d_visualization": {
+        "camera_controls_responsiveness": 0.1,
+        "3d_navigation_smoothness": true,
+        "depth_buffer_accuracy": true,
+        "perspective_distortion_check": true
+      },
+      "cellular_automaton_ui": {
+        "generation_counter_visibility": 0.9,
+        "play_pause_controls_accessibility": 44,
+        "speed_control_usability": true,
+        "pattern_selection_efficiency": true,
+        "cell_interaction_feedback": 0.05
+      }
+    },
+    "analysis_focus_areas": [
+      "Vulkan render pipeline efficiency",
+      "3D camera controls and navigation UX",
+      "Game of Life pattern visualization clarity", 
+      "Real-time simulation control interface",
+      "GPU performance impact on interaction",
+      "Accessibility of 3D cellular automaton display"
+    ],
+    "feedback_sessions": {
+      "session_1": {
+        "focus": "Vulkan rendering performance assessment",
+        "duration": 15,
+        "metrics": ["graphics_performance", "gpu_utilization", "render_pipeline"]
+      },
+      "session_2": {
+        "focus": "3D navigation and camera controls UX",
+        "duration": 15,
+        "metrics": ["3d_visualization", "interaction_responsiveness", "spatial_navigation"]
+      },
+      "session_3": {
+        "focus": "Game of Life simulation interface",
+        "duration": 15,
+        "metrics": ["cellular_automaton_ui", "pattern_controls", "accessibility"]
+      },
+      "session_4": {
+        "focus": "Comprehensive Vulkan 3D UX analysis",
+        "duration": 15,
+        "metrics": ["all_combined", "vulkan_specific_patterns", "performance_vs_usability"]
+      }
+    },
+    "vulkan_analysis_prompts": {
+      "render_performance": "Analyze Vulkan rendering performance focusing on command buffer efficiency, pipeline state management, and GPU memory utilization for optimal 3D Game of Life visualization.",
+      "3d_interaction": "Evaluate 3D navigation controls for cellular automaton exploration, including camera movement smoothness, zoom functionality, and spatial orientation clarity.",
+      "simulation_controls": "Assess the usability of Game of Life simulation controls including play/pause, speed adjustment, pattern loading, and real-time cell manipulation in 3D space."
+    },
+    "expected_vulkan_patterns": {
+      "high_gpu_usage": "Expected for 3D cellular automaton rendering",
+      "consistent_frame_timing": "Critical for smooth simulation visualization",
+      "memory_efficient_buffers": "Important for large 3D grid rendering",
+      "responsive_input_handling": "Essential for real-time 3D interaction"
+    }
+  }
+} 

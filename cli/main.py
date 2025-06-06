@@ -160,6 +160,17 @@ def create_parser() -> argparse.ArgumentParser:
     dashboard_parser.add_argument('--orchestrator-host', default='localhost')
     dashboard_parser.add_argument('--orchestrator-port', type=int, default=8765)
     
+    # Game testing command
+    game_parser = subparsers.add_parser('game', help='Game UX testing with 3:1 feedback cycles')
+    game_parser.add_argument('--iterations', type=int, default=12, 
+                            help='Total number of testing iterations (default: 12)')
+    game_parser.add_argument('--feedback-ratio', type=int, default=3,
+                            help='User feedback every N iterations (default: 3)')
+    game_parser.add_argument('--config', default='game_ux_config.json',
+                            help='Game testing configuration file')
+    game_parser.add_argument('--display-screenshots', action='store_true', default=True,
+                            help='Display screenshots with analysis overlays')
+    
     # Config command
     config_parser = subparsers.add_parser('config', help='Configuration management')
     config_parser.add_argument('--show', action='store_true', help='Show current configuration')
@@ -420,6 +431,70 @@ def handle_clean_command(args, config):
     subprocess.run(['python', 'simple_ux_tester.py', 'clean', '--keep', str(args.keep)])
 
 
+def handle_game_command(args, config):
+    """Handle game UX testing with 3:1 feedback cycles."""
+    print("🎮 Starting Game UX Testing Session...")
+    print("=" * 60)
+    print(f"📋 Configuration:")
+    print(f"   • Total iterations: {args.iterations}")
+    print(f"   • Feedback ratio: 1 feedback session every {args.feedback_ratio} iterations")
+    print(f"   • Config file: {args.config}")
+    print(f"   • Screenshot display: {'Yes' if args.display_screenshots else 'No'}")
+    print(f"")
+    
+    # Import and run the game testing controller
+    try:
+        import asyncio
+        import sys
+        import os
+        
+        # Add the project root to Python path
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        from game_testing_session import GameUXTestingController
+        
+        async def run_game_session():
+            controller = GameUXTestingController(config_path=args.config)
+            
+            try:
+                # Start session
+                session_id = await controller.start_game_testing_session(
+                    total_iterations=args.iterations,
+                    feedback_ratio=args.feedback_ratio
+                )
+                
+                print(f"🎯 Session ID: {session_id}")
+                print(f"🖼️  Screenshots will be displayed with analysis overlays")
+                print(f"💬 You'll be prompted for feedback every {args.feedback_ratio} iterations")
+                print(f"🛑 Press Ctrl+C to stop the session early")
+                print(f"")
+                
+                # Run the testing session
+                await controller.run_testing_session()
+                
+            except KeyboardInterrupt:
+                print("\n\n🛑 Game testing session interrupted by user")
+            except Exception as e:
+                print(f"❌ Error during game testing session: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+                controller.stop_session()
+                print("🏁 Game testing session completed")
+        
+        # Run the async session
+        asyncio.run(run_game_session())
+        
+    except ImportError as e:
+        print(f"❌ Error importing game testing modules: {e}")
+        print("💡 Make sure all dependencies are installed:")
+        print("   pip install opencv-python matplotlib pillow numpy")
+    except Exception as e:
+        print(f"❌ Error starting game testing session: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def print_welcome():
     """Print welcome message with system info."""
     print("🎯 UX-MIRROR: Self-Programming GPU-Driven UX Intelligence System")
@@ -454,6 +529,8 @@ def main():
         handle_insights_command(args, config)
     elif args.command == 'dashboard':
         handle_dashboard_command(args, config)
+    elif args.command == 'game':
+        handle_game_command(args, config)
     elif args.command == 'config':
         handle_config_command(args, config)
     elif args.command == 'list':
@@ -463,16 +540,19 @@ def main():
     else:
         print("🚀 Quick Start Guide:")
         print("=" * 30)
-        print("1. Start the multi-agent system:")
+        print("1. Game UX Testing (3:1 feedback cycles):")
+        print("   ux-tester game --iterations 12 --feedback-ratio 3")
+        print()
+        print("2. Start the multi-agent system:")
         print("   ux-tester agent start all")
         print()
-        print("2. Begin real-time monitoring:")
+        print("3. Begin real-time monitoring:")
         print("   ux-tester monitor start")
         print()
-        print("3. View UX insights:")
+        print("4. View UX insights:")
         print("   ux-tester insights")
         print()
-        print("4. For legacy testing:")
+        print("5. For legacy testing:")
         print("   ux-tester test --before")
         print("   # perform interaction")
         print("   ux-tester test --after")
