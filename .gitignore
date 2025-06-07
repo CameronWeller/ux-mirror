@@ -67,6 +67,13 @@ session_data/
 logs/
 *.log
 
+# Generated UX analysis reports (project independent)
+reports/
+reports/*.html
+reports/*.json
+reports/*.md
+reports/*.pdf
+
 # Temporary files
 temp/
 tmp/

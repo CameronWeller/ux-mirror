@@ -76,11 +76,19 @@ class CoreOrchestrator:
         
         # Use port manager for reliable port allocation
         try:
-            from core.port_manager import allocate_service_port
-            self.port = allocate_service_port("core_orchestrator", port)
-        except ImportError:
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+            from ux_tester.port_manager import get_port_manager
+            
+            port_manager = get_port_manager()
+            allocated_port = port_manager.allocate_port("core_orchestrator", port)
+            self.port = allocated_port if allocated_port else port
+            logger.info(f"PortManager allocated port {self.port} for core_orchestrator")
+        except ImportError as e:
             # Fallback if port manager not available
             self.port = port
+            logger.warning(f"PortManager not available ({e}), using default port {port}")
             
         self.running = False
         
@@ -148,7 +156,7 @@ class CoreOrchestrator:
             self.running = False
             logger.info("Core Orchestrator stopped")
     
-    async def _handle_agent_connection(self, websocket, path):
+    async def _handle_agent_connection(self, websocket, path="/"):
         """Handle new agent connections"""
         agent_id = None
         

@@ -1,0 +1,12 @@
+# Security dependencies for UX-MIRROR secure configuration
+# These provide encrypted storage and OS credential store integration
+
+# OS credential store integration (highest security)
+keyring>=24.0.0
+
+# Encryption library for fallback storage
+cryptography>=41.0.0
+
+# Additional security utilities
+secretstorage>=3.3.0; sys_platform == "linux"
+pywin32-ctypes>=0.2.0; sys_platform == "win32" 

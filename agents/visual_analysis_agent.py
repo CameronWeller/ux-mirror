@@ -25,6 +25,12 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 import websockets
 
+# Import screenshot handler
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+from capture.screenshot_handler import get_screenshot_handler
+
 # Make PyTorch import optional
 try:
     import torch
@@ -381,7 +387,10 @@ class VisualAnalysisAgent:
         # Initialize GPU-accelerated vision
         self.vision_processor = GPUAcceleratedVision()
         
-        # Analysis state
+        # Initialize screenshot handler
+        self.screenshot_handler = get_screenshot_handler()
+        
+        # Analysis state (keeping for backward compatibility)
         self.last_screenshot = None
         self.last_analysis = None
         self.baseline_screenshot = None
@@ -394,7 +403,7 @@ class VisualAnalysisAgent:
         self.monitoring_interval = 5.0  # seconds
         self.auto_monitor = False
         
-        logger.info("Visual Analysis Agent initialized")
+        logger.info("Visual Analysis Agent initialized with ScreenshotHandler")
     
     async def start(self):
         """Start the Visual Analysis Agent"""
@@ -491,10 +500,11 @@ class VisualAnalysisAgent:
         """Capture screenshot and perform full analysis"""
         start_time = time.time()
         
-        # Capture screenshot
-        screenshot = ImageGrab.grab()
-        screenshot_array = np.array(screenshot)
-        screenshot_bgr = cv2.cvtColor(screenshot_array, cv2.COLOR_RGB2BGR)
+        # Capture screenshot using screenshot handler
+        screenshot_bgr = self.screenshot_handler.capture_screenshot()
+        if screenshot_bgr is None:
+            logger.error("Failed to capture screenshot")
+            return None
         
         # Perform analysis
         analysis_result = await self._analyze_screenshot(screenshot_bgr)
@@ -641,30 +651,35 @@ class VisualAnalysisAgent:
     
     async def _set_baseline_screenshot(self):
         """Set current screenshot as baseline for comparisons"""
-        screenshot = ImageGrab.grab()
-        self.baseline_screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
-        logger.info("Baseline screenshot set")
+        success = self.screenshot_handler.set_baseline()
+        if success:
+            self.baseline_screenshot = self.screenshot_handler.get_baseline()
+            logger.info("Baseline screenshot set using ScreenshotHandler")
+        else:
+            logger.error("Failed to set baseline screenshot")
     
     async def _compare_with_baseline(self):
         """Compare current screenshot with baseline"""
-        if self.baseline_screenshot is None:
-            logger.warning("No baseline screenshot set")
-            return
-        
-        current_screenshot = ImageGrab.grab()
-        current_array = cv2.cvtColor(np.array(current_screenshot), cv2.COLOR_RGB2BGR)
-        
-        change_score, diff_image = self.vision_processor.detect_changes(
-            self.baseline_screenshot, current_array
-        )
-        
-        if self.websocket:
+        try:
+            comparison_result = self.screenshot_handler.compare_with_baseline()
+            if comparison_result is None:
+                logger.warning("Baseline comparison failed")
+                return
+            
             await self._send_to_orchestrator({
                 "type": "baseline_comparison",
                 "agent_id": "visual_analysis_agent",
-                "change_score": change_score,
-                "timestamp": datetime.now().isoformat()
+                "change_score": comparison_result["change_percentage"] / 100.0,
+                "change_percentage": comparison_result["change_percentage"],
+                "has_significant_change": comparison_result["has_significant_change"],
+                "mse": comparison_result["mse"],
+                "timestamp": comparison_result["timestamp"]
             })
+            
+            logger.info(f"Baseline comparison completed: {comparison_result['change_percentage']:.2f}% change")
+            
+        except Exception as e:
+            logger.error(f"Error during baseline comparison: {e}")
     
     async def _analyze_specific_screenshot(self, screenshot_path: str):
         """Analyze a specific screenshot file"""
@@ -719,11 +734,21 @@ class VisualAnalysisAgent:
     
     async def _send_to_orchestrator(self, message: Dict[str, Any]):
         """Send message to orchestrator"""
-        if self.websocket:
+        if self.websocket is not None:
             try:
+                # Check if websocket is still open before sending
+                if self.websocket.closed:
+                    logger.warning("WebSocket connection is closed, cannot send message")
+                    self.websocket = None
+                    return
+                
                 await self.websocket.send(json.dumps(message))
+            except websockets.exceptions.ConnectionClosed:
+                logger.warning("WebSocket connection closed during send")
+                self.websocket = None
             except Exception as e:
                 logger.error(f"Error sending message to orchestrator: {e}")
+                # Don't set websocket to None for other errors, may be temporary
 
 def main():
     """Run the Visual Analysis Agent"""

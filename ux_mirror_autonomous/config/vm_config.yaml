@@ -1,0 +1,101 @@
+# UX-MIRROR Autonomous Testing VM Configuration
+# Phase 1: Infrastructure Setup
+
+vm_settings:
+  name: "ux-mirror-autonomous"
+  os: "pop-os-22.04"
+  cpu_cores: 4
+  memory_gb: 4  # Configurable via launcher (2-8 GB)
+  storage_gb: 60
+  graphics: "virtio-gpu"
+  
+network:
+  type: "NAT"
+  port_forwards:
+    - host: 8080
+      guest: 8080
+      description: "UX-MIRROR communication"
+    - host: 5900
+      guest: 5900
+      description: "VNC access"
+
+shared_folders:
+  - host_path: "{UX_MIRROR_ROOT}"
+    guest_path: "/home/user/ux-mirror"
+    permissions: "rw"
+  - host_path: "{UX_MIRROR_ROOT}/test_results"
+    guest_path: "/home/user/test_results"
+    permissions: "rw"
+
+virtualization:
+  platform: "gnome-boxes"  # Primary choice for Linux
+  fallback: "virtualbox"   # Fallback option
+  
+iso_download:
+  url: "https://pop-iso.sfo2.cdn.digitaloceanspaces.com/22.04/amd64/intel/30/pop-os_22.04_amd64_intel_30.iso"
+  checksum: "auto"  # Will be verified during download
+
+guest_setup:
+  username: "uxmirror"
+  password: "autonomous2024"
+  hostname: "ux-mirror-vm"
+  auto_login: true
+  
+# Packages to install in VM
+packages:
+  system:
+    - python3
+    - python3-pip
+    - python3-tk
+    - git
+    - curl
+    - wget
+    - build-essential
+    - cmake
+    - ninja-build
+    - vulkan-tools
+    - vulkan-validationlayers-dev
+    - spirv-tools
+  
+  python:
+    - pyautogui
+    - opencv-python
+    - pillow
+    - psutil
+    - selenium
+    - playwright
+    - pytest
+    - requests
+    - pyyaml
+    - numpy
+    - matplotlib
+
+# Testing framework configuration
+testing:
+  input_safety:
+    failsafe_enabled: true
+    failsafe_key: "ctrl+shift+escape"
+    max_execution_time: 3600  # 1 hour max per test session
+  
+  screenshots:
+    format: "png"
+    quality: 95
+    directory: "/home/user/test_results/screenshots"
+  
+  videos:
+    enabled: false  # Disabled by default for performance
+    format: "mp4"
+    fps: 30
+    directory: "/home/user/test_results/videos"
+
+# Performance settings
+performance:
+  cpu_limit: 80  # Max CPU usage percentage
+  memory_limit: 90  # Max memory usage percentage
+  disk_io_limit: 100  # MB/s
+  
+# Debug settings
+debug:
+  vnc_enabled: true
+  log_level: "INFO"
+  verbose_output: false 

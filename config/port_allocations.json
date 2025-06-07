@@ -19,5 +19,12 @@
     "allocated_at": 1749247581.4718103,
     "process_id": null,
     "is_active": true
+  },
+  "ux_test_game": {
+    "port": 8765,
+    "service": "ux_test_game",
+    "allocated_at": 1749264412.3885436,
+    "process_id": null,
+    "is_active": true
   }
 }
