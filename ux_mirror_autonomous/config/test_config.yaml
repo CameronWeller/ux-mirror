@@ -1,0 +1,292 @@
+# Autonomous Testing Configuration for UX-MIRROR
+# Phase 2: Input Automation System Configuration
+
+# Performance thresholds for testing
+performance_thresholds:
+  # FPS (Frames Per Second) requirements
+  min_fps: 30              # Minimum acceptable FPS
+  target_fps: 60           # Target FPS for optimal performance
+  excellent_fps: 90        # Excellent performance threshold
+  
+  # Response time limits (in seconds)
+  max_ui_response_time: 0.5    # Maximum UI response time
+  max_click_response: 0.2      # Maximum click response time
+  max_key_response: 0.1        # Maximum keyboard response time
+  
+  # Memory usage limits
+  max_memory_usage: 2048       # Maximum memory usage in MB
+  memory_leak_threshold: 100   # Memory leak threshold in MB/hour
+  
+  # CPU usage limits
+  max_cpu_usage: 80           # Maximum CPU usage percentage
+  sustained_cpu_limit: 60     # Sustained CPU usage limit
+
+# Test execution settings
+test_execution:
+  # Default timeouts (in seconds)
+  default_timeout: 300        # 5 minutes default test timeout
+  startup_timeout: 30         # Application startup timeout
+  ui_element_timeout: 10      # UI element detection timeout
+  
+  # Safety settings
+  emergency_stop_enabled: true
+  max_test_duration: 3600     # 1 hour maximum test duration
+  safety_check_interval: 5    # Safety check every 5 seconds
+  
+  # Screenshot settings
+  screenshot_on_action: true
+  screenshot_on_failure: true
+  screenshot_compression: 85  # JPEG compression quality
+  
+  # Video recording settings
+  video_recording_enabled: false
+  video_fps: 30
+  video_quality: "medium"     # low, medium, high
+
+# Input simulation settings
+input_simulation:
+  # Mouse settings
+  mouse_speed: "human_like"   # slow, medium, fast, human_like
+  mouse_acceleration: true
+  mouse_smoothing: true
+  
+  # Click timing
+  click_timing: "realistic"   # immediate, realistic, slow
+  double_click_interval: 0.3
+  click_hold_duration: 0.1
+  
+  # Keyboard settings
+  typing_speed: "human_like"  # slow, medium, fast, human_like
+  key_press_duration: 0.05
+  key_repeat_delay: 0.5
+  
+  # Human-like variations
+  movement_variation: 0.2     # 20% variation in movement timing
+  pause_variation: 0.3        # 30% variation in pause timing
+  error_simulation: 0.02      # 2% chance of simulated input errors
+
+# Game-specific settings for 3D Game of Life
+game_settings:
+  # Pattern testing
+  test_patterns:
+    - name: "glider"
+      description: "Moving glider pattern"
+      stability: "stable_movement"
+      
+    - name: "oscillator" 
+      description: "Oscillating pattern"
+      stability: "oscillation"
+      
+    - name: "still_life"
+      description: "Static pattern"
+      stability: "static"
+  
+  # Evolution settings
+  max_test_generations: 1000
+  generation_check_interval: 10
+  stability_check_duration: 30.0
+  
+  # Population settings
+  min_population: 0
+  max_population: 100000
+  population_tracking_accuracy: 0.95
+  
+  # Performance under load
+  high_density_threshold: 0.8
+  stress_test_duration: 300   # 5 minutes
+
+# UI element detection settings
+ui_detection:
+  # Template matching
+  template_matching_threshold: 0.8
+  template_cache_size: 50
+  
+  # Color detection
+  color_detection_enabled: true
+  color_tolerance: 30         # HSV color tolerance
+  min_contour_area: 100       # Minimum area for color detection
+  
+  # Text recognition (OCR)
+  text_detection_enabled: true
+  ocr_confidence_threshold: 0.7
+  text_preprocessing: true
+  
+  # UI element definitions
+  ui_elements:
+    play_button:
+      detection_method: "color"
+      color_range: [[0, 255, 0], [50, 255, 50]]  # Green range
+      fallback_template: "templates/play_button.png"
+      
+    pause_button:
+      detection_method: "color" 
+      color_range: [[255, 255, 0], [255, 255, 50]]  # Yellow range
+      fallback_template: "templates/pause_button.png"
+      
+    reset_button:
+      detection_method: "color"
+      color_range: [[255, 0, 0], [255, 50, 50]]  # Red range
+      fallback_template: "templates/reset_button.png"
+      
+    settings_button:
+      detection_method: "template"
+      template_path: "templates/settings_button.png"
+
+# Text region definitions for OCR
+text_regions:
+  fps_counter:
+    region: [10, 10, 200, 50]    # [x, y, width, height]
+    expected_format: "FPS: XX.X"
+    extraction_pattern: "\\d+\\.?\\d*"
+    
+  generation_counter:
+    region: [10, 60, 200, 100]
+    expected_format: "Generation: XXXX"
+    extraction_pattern: "\\d+"
+    
+  cell_count:
+    region: [10, 110, 200, 150]
+    expected_format: "Living Cells: XXXX"
+    extraction_pattern: "\\d+"
+
+# Test scenario categories and priorities
+test_categories:
+  basic:
+    priority: 1
+    description: "Essential functionality tests"
+    required_pass_rate: 1.0    # 100% must pass
+    
+  performance:
+    priority: 1
+    description: "Performance and stability tests" 
+    required_pass_rate: 0.9    # 90% must pass
+    
+  ui_interaction:
+    priority: 2
+    description: "UI interaction and usability tests"
+    required_pass_rate: 0.85   # 85% must pass
+    
+  game_logic:
+    priority: 1
+    description: "Game-specific logic tests"
+    required_pass_rate: 0.95   # 95% must pass
+    
+  stress:
+    priority: 3
+    description: "Stress and edge case tests"
+    required_pass_rate: 0.8    # 80% must pass
+    
+  user_experience:
+    priority: 2
+    description: "User experience and accessibility tests"
+    required_pass_rate: 0.85   # 85% must pass
+
+# Reporting and analysis settings
+reporting:
+  # Report generation
+  generate_html_report: true
+  generate_json_report: true
+  generate_csv_metrics: true
+  
+  # Report content
+  include_screenshots: true
+  include_performance_graphs: true
+  include_error_details: true
+  
+  # Metrics to track
+  tracked_metrics:
+    - fps_average
+    - fps_min
+    - fps_max
+    - fps_stability
+    - ui_response_time
+    - memory_usage
+    - cpu_usage
+    - generation_count
+    - population_count
+    - error_count
+    - screenshot_count
+    
+  # Analysis settings
+  performance_analysis_enabled: true
+  trend_analysis_enabled: true
+  anomaly_detection_enabled: true
+
+# VM-specific settings (when running in VM)
+vm_settings:
+  # Resource monitoring
+  monitor_host_resources: true
+  vm_memory_limit: 4096       # VM memory limit in MB
+  vm_cpu_cores: 2             # VM CPU cores
+  
+  # Display settings
+  vm_resolution: [1920, 1080] # VM display resolution
+  vm_color_depth: 32          # Color depth
+  
+  # Network settings (if needed)
+  network_enabled: false
+  
+  # Snapshot settings
+  create_snapshots: true
+  snapshot_frequency: 300     # Every 5 minutes during long tests
+
+# Debug and logging settings
+logging:
+  # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_level: "INFO"
+  
+  # Log destinations
+  log_to_file: true
+  log_to_console: true
+  
+  # Log file settings
+  log_file_max_size: 50       # MB
+  log_file_backup_count: 5
+  log_rotation: true
+  
+  # Debug settings
+  debug_mode: false
+  verbose_screenshots: false
+  save_intermediate_results: true
+
+# Integration settings
+integration:
+  # External tools
+  use_external_ocr: false     # Use external OCR engine if available
+  use_gpu_acceleration: true  # Use GPU for image processing if available
+  
+  # API endpoints (if needed)
+  results_api_endpoint: null
+  monitoring_api_endpoint: null
+  
+  # Database settings (for result storage)
+  database_enabled: false
+  database_type: "sqlite"     # sqlite, postgresql, mysql
+  database_connection: null
+
+# Custom patterns and templates
+custom_patterns:
+  # Add custom detection patterns here
+  custom_ui_elements: {}
+  custom_text_patterns: {}
+  custom_color_patterns: {}
+
+# Test data and fixtures
+test_data:
+  # Sample patterns for testing
+  pattern_files:
+    - "patterns/glider.rle"
+    - "patterns/oscillator.rle"
+    - "patterns/still_life.rle"
+  
+  # Reference screenshots
+  reference_screenshots:
+    - "references/startup_screen.png"
+    - "references/game_running.png"
+    - "references/paused_state.png"
+  
+  # Test datasets
+  performance_baselines:
+    fps_baseline: 60
+    memory_baseline: 512      # MB
+    startup_time_baseline: 5  # seconds 

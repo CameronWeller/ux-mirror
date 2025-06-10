@@ -128,9 +128,9 @@ class UXMirrorGameLauncher:
         ttk.Label(mode_frame, text="    • Best for: Analyzing existing running applications", 
                  style="Subtitle.TLabel").pack(anchor=tk.W)
         
-        # Autonomous Testing Mode (placeholder for Phase 1)
-        autonomous_radio = ttk.Radiobutton(mode_frame, text="🤖 Autonomous Testing Mode (Coming Soon)", 
-                                         variable=self.launch_mode, value="autonomous", state="disabled")
+        # Autonomous Testing Mode - Now Available!
+        autonomous_radio = ttk.Radiobutton(mode_frame, text="🤖 Autonomous Testing Mode", 
+                                         variable=self.launch_mode, value="autonomous")
         autonomous_radio.pack(anchor=tk.W, pady=(10, 0))
         ttk.Label(mode_frame, text="    • VM environment with automated testing", 
                  style="Subtitle.TLabel").pack(anchor=tk.W)
@@ -237,6 +237,12 @@ class UXMirrorGameLauncher:
             self.launch_game_only()
         elif mode == "ux":
             self.launch_ux_only()
+        elif mode == "autonomous":
+            self.launch_autonomous()
+        else:
+            messagebox.showwarning("Unknown Mode", 
+                                 "Selected launch mode is not recognized.")
+            return
             
         self.launch_button.config(state='disabled')
         self.stop_button.config(state='normal')
@@ -260,6 +266,23 @@ class UXMirrorGameLauncher:
         """Launch only UX-MIRROR"""
         self.log("🔍 Launching UX-MIRROR...")
         threading.Thread(target=self._launch_ux_thread, daemon=True).start()
+    
+    def launch_autonomous(self):
+        """Launch autonomous testing mode"""
+        self.log("🤖 Starting Autonomous Testing Mode...")
+        
+        # Check if autonomous framework exists
+        autonomous_path = Path("ux_mirror_autonomous")
+        if not autonomous_path.exists():
+            messagebox.showerror("Autonomous Testing Error", 
+                               "Autonomous testing framework not found!\n"
+                               "Please run the setup script first.")
+            self.launch_button.config(state='normal')
+            self.stop_button.config(state='disabled')
+            return
+        
+        # Show test options dialog
+        self.show_autonomous_options()
     
     def _launch_game_thread(self):
         """Launch game in background thread"""
@@ -295,6 +318,237 @@ class UXMirrorGameLauncher:
         """Launch UX-MIRROR with a delay for integrated mode"""
         time.sleep(3)  # Wait for game to initialize
         self._launch_ux_thread()
+    
+    def show_autonomous_options(self):
+        """Show autonomous testing options dialog"""
+        options_window = tk.Toplevel(self.root)
+        options_window.title("Autonomous Testing Options")
+        options_window.geometry("500x400")
+        options_window.resizable(False, False)
+        options_window.transient(self.root)
+        options_window.grab_set()
+        
+        # Center the window
+        options_window.update_idletasks()
+        x = (options_window.winfo_screenwidth() // 2) - (500 // 2)
+        y = (options_window.winfo_screenheight() // 2) - (400 // 2)
+        options_window.geometry(f"+{x}+{y}")
+        
+        main_frame = ttk.Frame(options_window, padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        ttk.Label(main_frame, text="🤖 Autonomous Testing Options", 
+                 font=('Segoe UI', 14, 'bold')).pack(pady=(0, 20))
+        
+        # Test suite options
+        self.test_suite_var = tk.StringVar(value="basic")
+        
+        ttk.Label(main_frame, text="Select Test Suite:", 
+                 font=('Segoe UI', 10, 'bold')).pack(anchor=tk.W)
+        
+        ttk.Radiobutton(main_frame, text="🧪 Basic Test Suite (Quick - ~5 minutes)", 
+                       variable=self.test_suite_var, value="basic").pack(anchor=tk.W, pady=2)
+        ttk.Label(main_frame, text="    • Essential functionality tests", 
+                 style="Subtitle.TLabel").pack(anchor=tk.W)
+        
+        ttk.Radiobutton(main_frame, text="🚀 Full Test Suite (Comprehensive - ~30 minutes)", 
+                       variable=self.test_suite_var, value="full").pack(anchor=tk.W, pady=2)
+        ttk.Label(main_frame, text="    • All test categories, detailed analysis", 
+                 style="Subtitle.TLabel").pack(anchor=tk.W)
+        
+        ttk.Radiobutton(main_frame, text="⚡ Performance Tests Only (~10 minutes)", 
+                       variable=self.test_suite_var, value="performance").pack(anchor=tk.W, pady=2)
+        ttk.Label(main_frame, text="    • FPS, memory, response time analysis", 
+                 style="Subtitle.TLabel").pack(anchor=tk.W)
+        
+        ttk.Radiobutton(main_frame, text="🎮 Game Logic Tests Only (~15 minutes)", 
+                       variable=self.test_suite_var, value="game_logic").pack(anchor=tk.W, pady=2)
+        ttk.Label(main_frame, text="    • 3D Game of Life specific testing", 
+                 style="Subtitle.TLabel").pack(anchor=tk.W)
+        
+        # VM Settings frame
+        vm_frame = ttk.LabelFrame(main_frame, text="VM Configuration", padding="10")
+        vm_frame.pack(fill=tk.X, pady=(20, 10))
+        
+        memory_frame = ttk.Frame(vm_frame)
+        memory_frame.pack(fill=tk.X)
+        
+        ttk.Label(memory_frame, text="Memory:").pack(side=tk.LEFT)
+        memory_spinbox = ttk.Spinbox(memory_frame, from_=2, to=8, 
+                                   textvariable=self.vm_memory, width=5)
+        memory_spinbox.pack(side=tk.LEFT, padx=(5, 2))
+        ttk.Label(memory_frame, text="GB").pack(side=tk.LEFT)
+        
+        # Status frame
+        status_frame = ttk.LabelFrame(main_frame, text="Testing Status", padding="10")
+        status_frame.pack(fill=tk.X, pady=(10, 20))
+        
+        ttk.Label(status_frame, text="🔍 Framework: Phase 2 Input Automation", 
+                 style="Status.TLabel").pack(anchor=tk.W)
+        ttk.Label(status_frame, text="🖥️ Target: 3D Game of Life (Vulkan)", 
+                 style="Status.TLabel").pack(anchor=tk.W)
+        ttk.Label(status_frame, text="⚙️ Features: PyAutoGUI, Computer Vision", 
+                 style="Status.TLabel").pack(anchor=tk.W)
+        
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        ttk.Button(button_frame, text="🚀 Start Testing", 
+                  command=lambda: self.start_autonomous_testing(options_window)).pack(side=tk.LEFT)
+        
+        ttk.Button(button_frame, text="📊 View Previous Results", 
+                  command=self.view_autonomous_results).pack(side=tk.LEFT, padx=(10, 0))
+        
+        ttk.Button(button_frame, text="Cancel", 
+                  command=self.cancel_autonomous).pack(side=tk.RIGHT)
+    
+    def start_autonomous_testing(self, options_window):
+        """Start the autonomous testing process"""
+        options_window.destroy()
+        
+        test_suite = self.test_suite_var.get()
+        vm_memory = self.vm_memory.get()
+        
+        self.log(f"🤖 Starting {test_suite} test suite with {vm_memory}GB VM memory...")
+        
+        # Start autonomous testing in background thread
+        threading.Thread(target=self._run_autonomous_tests, 
+                        args=(test_suite, vm_memory), daemon=True).start()
+    
+    def _run_autonomous_tests(self, test_suite, vm_memory):
+        """Run autonomous tests in background thread"""
+        try:
+            # Import autonomous testing framework
+            import sys
+            sys.path.append(str(Path("ux_mirror_autonomous")))
+            
+            from ux_mirror_autonomous.run_tests import main as run_autonomous_tests
+            
+            # Configure test parameters
+            test_config = {
+                "test_suite": test_suite,
+                "vm_memory": vm_memory,
+                "target_application": "3d_game_of_life"
+            }
+            
+            self.log("📋 Autonomous testing configuration:")
+            self.log(f"   • Test Suite: {test_suite}")
+            self.log(f"   • VM Memory: {vm_memory}GB")
+            self.log(f"   • Target: 3D Game of Life")
+            
+            # Run the tests
+            result = run_autonomous_tests(test_config)
+            
+            if result and result.get("success"):
+                self.log("✅ Autonomous testing completed successfully!")
+                self.log(f"📊 Results: {result.get('pass_count', 0)}/{result.get('total_count', 0)} tests passed")
+                
+                # Show results dialog
+                self.root.after(0, self.show_test_results, result)
+            else:
+                self.log("❌ Autonomous testing failed or was interrupted")
+                
+        except ImportError as e:
+            self.log(f"❌ Failed to import autonomous testing framework: {e}")
+            self.log("💡 Please ensure Phase 2 dependencies are installed")
+        except Exception as e:
+            self.log(f"❌ Autonomous testing error: {e}")
+        finally:
+            # Re-enable launch button
+            self.root.after(0, lambda: (
+                self.launch_button.config(state='normal'),
+                self.stop_button.config(state='disabled')
+            ))
+    
+    def show_test_results(self, results):
+        """Show autonomous test results in a dialog"""
+        results_window = tk.Toplevel(self.root)
+        results_window.title("Autonomous Test Results")
+        results_window.geometry("600x500")
+        results_window.resizable(True, True)
+        
+        main_frame = ttk.Frame(results_window, padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Results summary
+        ttk.Label(main_frame, text="🧪 Test Results Summary", 
+                 font=('Segoe UI', 14, 'bold')).pack(pady=(0, 15))
+        
+        summary_frame = ttk.LabelFrame(main_frame, text="Summary", padding="10")
+        summary_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        pass_count = results.get('pass_count', 0)
+        total_count = results.get('total_count', 0)
+        pass_rate = (pass_count / total_count * 100) if total_count > 0 else 0
+        
+        ttk.Label(summary_frame, text=f"✅ Passed: {pass_count}/{total_count} ({pass_rate:.1f}%)", 
+                 style="Status.TLabel").pack(anchor=tk.W)
+        ttk.Label(summary_frame, text=f"⏱️ Duration: {results.get('total_duration', 0):.1f} seconds", 
+                 style="Status.TLabel").pack(anchor=tk.W)
+        ttk.Label(summary_frame, text=f"📸 Screenshots: {results.get('total_screenshots', 0)}", 
+                 style="Status.TLabel").pack(anchor=tk.W)
+        
+        if results.get('average_fps'):
+            ttk.Label(summary_frame, text=f"🎮 Average FPS: {results['average_fps']:.1f}", 
+                     style="Status.TLabel").pack(anchor=tk.W)
+        
+        # Detailed results
+        details_frame = ttk.LabelFrame(main_frame, text="Detailed Results", padding="10")
+        details_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Create treeview for detailed results
+        tree = ttk.Treeview(details_frame, columns=('result', 'duration'), show='tree headings')
+        tree.heading('#0', text='Test')
+        tree.heading('result', text='Result')
+        tree.heading('duration', text='Duration (s)')
+        
+        scrollbar_tree = ttk.Scrollbar(details_frame, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar_tree.set)
+        
+        # Populate results
+        for test_result in results.get('test_results', []):
+            result_icon = "✅" if test_result['result'] == 'pass' else "❌"
+            tree.insert('', 'end', 
+                       text=f"{result_icon} {test_result['scenario_name']}", 
+                       values=(test_result['result'], f"{test_result['metrics']['duration']:.2f}"))
+        
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar_tree.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X, pady=(15, 0))
+        
+        ttk.Button(button_frame, text="📁 Open Full Report", 
+                  command=lambda: self.open_autonomous_reports()).pack(side=tk.LEFT)
+        ttk.Button(button_frame, text="Close", 
+                  command=results_window.destroy).pack(side=tk.RIGHT)
+    
+    def view_autonomous_results(self):
+        """View previous autonomous test results"""
+        self.log("📊 Opening autonomous test results...")
+        reports_dir = Path("ux_mirror_autonomous") / "test_results"
+        reports_dir.mkdir(exist_ok=True, parents=True)
+        
+        try:
+            import os
+            os.startfile(str(reports_dir))  # Windows
+        except AttributeError:
+            import subprocess
+            try:
+                subprocess.run(["open", str(reports_dir)])  # macOS
+            except:
+                subprocess.run(["xdg-open", str(reports_dir)])  # Linux
+    
+    def open_autonomous_reports(self):
+        """Open autonomous testing reports directory"""
+        self.view_autonomous_results()
+    
+    def cancel_autonomous(self):
+        """Cancel autonomous testing setup"""
+        self.launch_button.config(state='normal')
+        self.stop_button.config(state='disabled')
     
     def stop_all(self):
         """Stop all launched processes"""
