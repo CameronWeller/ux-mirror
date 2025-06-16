@@ -4,19 +4,18 @@ UX Mirror - User Input Tracker
 Tracks mouse and keyboard input to provide context for UI analysis
 """
 
-import time
 import json
 import logging
-from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime
-from collections import deque
 import threading
+import time
+from collections import deque
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 # Platform-specific imports
 try:
-    import pynput
-    from pynput import mouse, keyboard
+    from pynput import keyboard, mouse
     PYNPUT_AVAILABLE = True
 except ImportError:
     PYNPUT_AVAILABLE = False
@@ -113,7 +112,7 @@ class UserInputTracker:
         if not self.tracking_enabled:
             return
         
-        event = InputEvent(
+        self._add_event(InputEvent(
             timestamp=time.time(),
             event_type='click',
             data={
@@ -122,17 +121,19 @@ class UserInputTracker:
                 'button': str(button),
                 'pressed': pressed
             }
-        )
-        self._add_event(event)
+        ))
         
-        # Update heatmap
+        # Update heatmap for pressed events
         if pressed:
-            grid_x = x // 50  # 50px grid
-            grid_y = y // 50
-            key = f"{grid_x},{grid_y}"
-            
-            with self.lock:
-                self.click_heatmap[key] = self.click_heatmap.get(key, 0) + 1
+            self._update_click_heatmap(x, y)
+    
+    def _update_click_heatmap(self, x: int, y: int):
+        """Update click position heatmap"""
+        grid_x, grid_y = x // 50, y // 50  # 50px grid
+        key = f"{grid_x},{grid_y}"
+        
+        with self.lock:
+            self.click_heatmap[key] = self.click_heatmap.get(key, 0) + 1
     
     def _on_move(self, x, y):
         """Handle mouse move events (sampled)"""
@@ -141,79 +142,55 @@ class UserInputTracker:
         
         # Sample movement (don't record every pixel)
         current_time = time.time()
-        if hasattr(self, '_last_move_time'):
-            if current_time - self._last_move_time < 0.1:  # Max 10 Hz
-                return
+        if hasattr(self, '_last_move_time') and current_time - self._last_move_time < 0.1:
+            return
         
         self._last_move_time = current_time
-        
-        event = InputEvent(
+        self._add_event(InputEvent(
             timestamp=current_time,
             event_type='move',
             data={'x': x, 'y': y}
-        )
-        self._add_event(event)
+        ))
     
     def _on_scroll(self, x, y, dx, dy):
         """Handle mouse scroll events"""
         if not self.tracking_enabled:
             return
         
-        event = InputEvent(
+        self._add_event(InputEvent(
             timestamp=time.time(),
             event_type='scroll',
-            data={
-                'x': x,
-                'y': y,
-                'dx': dx,
-                'dy': dy
-            }
-        )
-        self._add_event(event)
+            data={'x': x, 'y': y, 'dx': dx, 'dy': dy}
+        ))
+    
+    def _handle_key_event(self, key, action: str):
+        """Handle keyboard events"""
+        if not self.tracking_enabled:
+            return
+        
+        try:
+            key_name = key.char if hasattr(key, 'char') else str(key)
+        except AttributeError:
+            key_name = str(key)
+        
+        self._add_event(InputEvent(
+            timestamp=time.time(),
+            event_type='key',
+            data={'key': key_name, 'action': action}
+        ))
+        
+        # Update frequency for press events
+        if action == 'press':
+            with self.lock:
+                self.key_frequency[key_name] = self.key_frequency.get(key_name, 0) + 1
     
     def _on_key_press(self, key):
         """Handle key press events"""
-        if not self.tracking_enabled:
-            return
-        
-        try:
-            key_name = key.char if hasattr(key, 'char') else str(key)
-        except AttributeError:
-            key_name = str(key)
-        
-        event = InputEvent(
-            timestamp=time.time(),
-            event_type='key',
-            data={
-                'key': key_name,
-                'action': 'press'
-            }
-        )
-        self._add_event(event)
-        
-        # Update frequency
-        with self.lock:
-            self.key_frequency[key_name] = self.key_frequency.get(key_name, 0) + 1
+        self._handle_key_event(key, 'press')
     
     def _on_key_release(self, key):
         """Handle key release events"""
-        if not self.tracking_enabled:
-            return
-        
-        try:
-            key_name = key.char if hasattr(key, 'char') else str(key)
-        except AttributeError:
-            key_name = str(key)
-        
-        event = InputEvent(
-            timestamp=time.time(),
-            event_type='key',
-            data={
-                'key': key_name,
-                'action': 'release'
-            }
-        )
-        self._add_event(event)
+        self._handle_key_event(key, 'release')
     
     def get_recent_activity(self, seconds: float = 10.0) -> Dict:
         """Get summary of recent user activity"""

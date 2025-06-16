@@ -4,29 +4,28 @@ UX Mirror API - Visual Feedback for AI Game Development
 Main interface for AI agents to get visual feedback on their game builds
 """
 
-import os
-import sys
+import argparse
 import asyncio
 import json
-import argparse
-from typing import Dict, Optional, List, Any
-from datetime import datetime
 import logging
+import os
+from datetime import datetime
 from pathlib import Path
-from dataclasses import dataclass
-import base64
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 # Import our modules
-from vulkan_screenshot_capture import VulkanScreenshotCapture, VulkanFrame
 from ai_vision_analyzer import AIVisionAnalyzer, GameUIFeedbackProcessor
 from user_input_tracker import UserInputTracker
+from vulkan_screenshot_capture import VulkanFrame, VulkanScreenshotCapture
 
-# FastAPI for the API server
+# Optional API imports
 try:
-    from fastapi import FastAPI, HTTPException, BackgroundTasks
+    import uvicorn
+    from fastapi import BackgroundTasks, FastAPI, HTTPException
     from fastapi.responses import JSONResponse
     from pydantic import BaseModel
-    import uvicorn
     API_AVAILABLE = True
 except ImportError:
     API_AVAILABLE = False
@@ -60,10 +59,18 @@ if API_AVAILABLE:
 class UXMirrorAPI:
     """Main API class for UX Mirror"""
     
+    DEFAULT_CONFIG = {
+        "capture": {"width": 1920, "height": 1080, "fps": 1},
+        "analysis": {"provider": "openai", "model": "gpt-4-vision-preview", "max_issues": 10},
+        "api": {"port": 8888, "host": "localhost"}
+    }
+    
     def __init__(self, config_path: Optional[str] = None):
         self.config = self._load_config(config_path)
         self.capture = VulkanScreenshotCapture()
         self.input_tracker = UserInputTracker()
+        
+        # API configuration
         self.api_key = os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
         self.provider = "openai" if os.getenv("OPENAI_API_KEY") else "anthropic"
         
@@ -72,100 +79,94 @@ class UXMirrorAPI:
         
         # Initialize FastAPI if available
         if API_AVAILABLE:
-            self.app = FastAPI(
-                title="UX Mirror API",
-                description="Visual feedback for AI game developers",
-                version="1.0.0"
-            )
-            self._setup_routes()
+            self.app = self._create_app()
     
     def _load_config(self, config_path: Optional[str]) -> Dict:
-        """Load configuration"""
-        default_config = {
-            "capture": {
-                "width": 1920,
-                "height": 1080,
-                "fps": 1
-            },
-            "analysis": {
-                "provider": "openai",
-                "model": "gpt-4-vision-preview",
-                "max_issues": 10
-            },
-            "api": {
-                "port": 8888,
-                "host": "localhost"
-            }
-        }
+        """Load configuration from file or use defaults"""
+        config = self.DEFAULT_CONFIG.copy()
         
         if config_path and Path(config_path).exists():
-            with open(config_path, 'r') as f:
-                user_config = json.load(f)
-                default_config.update(user_config)
-        
-        return default_config
-    
-    def _setup_routes(self):
-        """Setup FastAPI routes"""
-        
-        @self.app.get("/")
-        async def root():
-            return {
-                "name": "UX Mirror API",
-                "status": "running",
-                "endpoints": [
-                    "/analyze",
-                    "/capture",
-                    "/feedback",
-                    "/health"
-                ]
-            }
-        
-        @self.app.post("/analyze", response_model=FeedbackResponse)
-        async def analyze_current_screen(request: ScreenshotRequest):
-            """Analyze current game screen and return feedback"""
             try:
-                # Capture screenshot
-                frame = await self._capture_screenshot_async()
-                if not frame:
-                    raise HTTPException(status_code=500, detail="Failed to capture screenshot")
-                
-                # Get user input data if requested
-                user_input_data = None
-                if request.include_user_input:
-                    user_input_data = self.input_tracker.get_recent_activity()
-                
-                # Analyze with AI
-                feedback = await self._analyze_frame_async(
-                    frame,
-                    context=request.context,
-                    specific_concern=request.specific_concern,
-                    user_input=user_input_data
-                )
-                
-                return FeedbackResponse(
-                    timestamp=datetime.now().isoformat(),
-                    summary=feedback['summary'],
-                    issues=feedback['priority_fixes'],
-                    recommendations=feedback.get('recommendations', []),
-                    code_suggestions=feedback.get('code_suggestions', []),
-                    metrics=feedback.get('metrics', {}),
-                    user_input_summary=user_input_data
-                )
-                
+                with open(config_path, 'r') as f:
+                    user_config = json.load(f)
+                    # Deep merge user config
+                    for key, value in user_config.items():
+                        if isinstance(value, dict) and key in config:
+                            config[key].update(value)
+                        else:
+                            config[key] = value
             except Exception as e:
-                logger.error(f"Analysis failed: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                logger.error(f"Failed to load config: {e}")
         
-        @self.app.get("/health")
-        async def health_check():
-            """Health check endpoint"""
-            return {
-                "status": "healthy",
-                "capture_available": self.capture.shared_memory is not None,
-                "api_key_configured": self.api_key is not None,
-                "timestamp": datetime.now().isoformat()
-            }
+        return config
+    
+    def _create_app(self) -> FastAPI:
+        """Create and configure FastAPI application"""
+        app = FastAPI(
+            title="UX Mirror API",
+            description="Visual feedback for AI game developers",
+            version="1.0.0"
+        )
+        
+        # Register routes
+        app.get("/")(self._root)
+        app.post("/analyze", response_model=FeedbackResponse)(self._analyze_current_screen)
+        app.get("/health")(self._health_check)
+        
+        return app
+    
+    async def _root(self):
+        """Root endpoint"""
+        return {
+            "name": "UX Mirror API",
+            "status": "running",
+            "endpoints": ["/analyze", "/capture", "/feedback", "/health"]
+        }
+    
+    async def _analyze_current_screen(self, request: ScreenshotRequest):
+        """Analyze current game screen and return feedback"""
+        try:
+            # Capture screenshot
+            frame = await self._capture_screenshot_async()
+            if not frame:
+                raise HTTPException(status_code=500, detail="Failed to capture screenshot")
+            
+            # Get user input data if requested
+            user_input_data = (
+                self.input_tracker.get_recent_activity() 
+                if request.include_user_input else None
+            )
+            
+            # Analyze with AI
+            feedback = await self._analyze_frame_async(
+                frame,
+                context=request.context,
+                specific_concern=request.specific_concern,
+                user_input=user_input_data
+            )
+            
+            return FeedbackResponse(
+                timestamp=datetime.now().isoformat(),
+                summary=feedback['summary'],
+                issues=feedback['priority_fixes'],
+                recommendations=feedback.get('recommendations', []),
+                code_suggestions=feedback.get('code_suggestions', []),
+                metrics=feedback.get('metrics', {}),
+                user_input_summary=user_input_data
+            )
+            
+        except Exception as e:
+            logger.error(f"Analysis failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    async def _health_check(self):
+        """Health check endpoint"""
+        return {
+            "status": "healthy",
+            "capture_available": self.capture.shared_memory is not None,
+            "api_key_configured": self.api_key is not None,
+            "timestamp": datetime.now().isoformat()
+        }
     
     async def _capture_screenshot_async(self) -> Optional[VulkanFrame]:
         """Capture screenshot asynchronously"""
