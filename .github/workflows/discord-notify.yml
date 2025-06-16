@@ -1,0 +1,244 @@
+name: Discord Notifications
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [ opened, closed, reopened ]
+  issues:
+    types: [ opened, closed, reopened ]
+  release:
+    types: [ published ]
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [ completed ]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Send Push Notification
+      if: github.event_name == 'push'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "embeds": [{
+              "title": "📤 New Push to '${{ github.ref_name }}'",
+              "description": "**${{ github.event.head_commit.message }}**",
+              "color": 3447003,
+              "author": {
+                "name": "${{ github.event.head_commit.author.name }}",
+                "icon_url": "https://github.com/${{ github.actor }}.png"
+              },
+              "fields": [
+                {
+                  "name": "Commit",
+                  "value": "[`${{ github.sha }}`](${{ github.event.head_commit.url }})",
+                  "inline": true
+                },
+                {
+                  "name": "Files Changed",
+                  "value": "See commit for details",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "GitHub",
+                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+              },
+              "timestamp": "${{ github.event.head_commit.timestamp }}"
+            }]
+          }' \
+          $DISCORD_WEBHOOK
+
+    - name: Send PR Notification
+      if: github.event_name == 'pull_request'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        if [ "${{ github.event.action }}" = "opened" ]; then
+          COLOR=3066993
+          EMOJI="📦"
+        elif [ "${{ github.event.action }}" = "closed" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+          COLOR=2067276
+          EMOJI="✅"
+        elif [ "${{ github.event.action }}" = "closed" ]; then
+          COLOR=15158332
+          EMOJI="❌"
+        else
+          COLOR=3447003
+          EMOJI="🔄"
+        fi
+        
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "embeds": [{
+              "title": "'$EMOJI' Pull Request #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}",
+              "description": "${{ github.event.pull_request.body }}",
+              "url": "${{ github.event.pull_request.html_url }}",
+              "color": '$COLOR',
+              "author": {
+                "name": "${{ github.event.pull_request.user.login }}",
+                "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
+              },
+              "fields": [
+                {
+                  "name": "Status",
+                  "value": "${{ github.event.action }}",
+                  "inline": true
+                },
+                {
+                  "name": "Base → Head",
+                  "value": "`${{ github.event.pull_request.base.ref }}` ← `${{ github.event.pull_request.head.ref }}`",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "GitHub Pull Request",
+                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+              }
+            }]
+          }' \
+          $DISCORD_WEBHOOK
+
+    - name: Send Issue Notification
+      if: github.event_name == 'issues'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        if [ "${{ github.event.action }}" = "opened" ]; then
+          COLOR=15105570
+          EMOJI="🐛"
+        elif [ "${{ github.event.action }}" = "closed" ]; then
+          COLOR=2067276
+          EMOJI="✅"
+        else
+          COLOR=3447003
+          EMOJI="🔄"
+        fi
+        
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "embeds": [{
+              "title": "'$EMOJI' Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}",
+              "description": "${{ github.event.issue.body }}",
+              "url": "${{ github.event.issue.html_url }}",
+              "color": '$COLOR',
+              "author": {
+                "name": "${{ github.event.issue.user.login }}",
+                "icon_url": "${{ github.event.issue.user.avatar_url }}"
+              },
+              "fields": [
+                {
+                  "name": "Status",
+                  "value": "${{ github.event.action }}",
+                  "inline": true
+                },
+                {
+                  "name": "Labels",
+                  "value": "${{ join(github.event.issue.labels.*.name, ', ') }}",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "GitHub Issues",
+                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+              }
+            }]
+          }' \
+          $DISCORD_WEBHOOK
+
+    - name: Send Release Notification
+      if: github.event_name == 'release'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "content": "@everyone",
+            "embeds": [{
+              "title": "🎉 New Release: ${{ github.event.release.tag_name }}",
+              "description": "${{ github.event.release.body }}",
+              "url": "${{ github.event.release.html_url }}",
+              "color": 2067276,
+              "author": {
+                "name": "${{ github.event.release.author.login }}",
+                "icon_url": "${{ github.event.release.author.avatar_url }}"
+              },
+              "fields": [
+                {
+                  "name": "Tag",
+                  "value": "`${{ github.event.release.tag_name }}`",
+                  "inline": true
+                },
+                {
+                  "name": "Pre-release",
+                  "value": "${{ github.event.release.prerelease }}",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "GitHub Releases",
+                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+              }
+            }]
+          }' \
+          $DISCORD_WEBHOOK
+
+    - name: Send Build Status
+      if: github.event_name == 'workflow_run'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+          COLOR=2067276
+          EMOJI="✅"
+          TITLE="Build Successful"
+        elif [ "${{ github.event.workflow_run.conclusion }}" = "failure" ]; then
+          COLOR=15158332
+          EMOJI="❌"
+          TITLE="Build Failed"
+        else
+          COLOR=15105570
+          EMOJI="⚠️"
+          TITLE="Build ${{ github.event.workflow_run.conclusion }}"
+        fi
+        
+        curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "embeds": [{
+              "title": "'$EMOJI' '$TITLE'",
+              "description": "Workflow: **${{ github.event.workflow_run.name }}**",
+              "url": "${{ github.event.workflow_run.html_url }}",
+              "color": '$COLOR',
+              "fields": [
+                {
+                  "name": "Branch",
+                  "value": "`${{ github.event.workflow_run.head_branch }}`",
+                  "inline": true
+                },
+                {
+                  "name": "Commit",
+                  "value": "[`${{ github.event.workflow_run.head_sha }}`](${{ github.event.workflow_run.head_repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }})",
+                  "inline": true
+                },
+                {
+                  "name": "Duration",
+                  "value": "${{ github.event.workflow_run.run_duration_ms }}ms",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "GitHub Actions",
+                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+              }
+            }]
+          }' \
+          $DISCORD_WEBHOOK 
