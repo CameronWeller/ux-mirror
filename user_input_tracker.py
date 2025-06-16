@@ -178,7 +178,7 @@ class UserInputTracker:
         
         try:
             key_name = key.char if hasattr(key, 'char') else str(key)
-        except:
+        except AttributeError:
             key_name = str(key)
         
         event = InputEvent(
@@ -202,7 +202,7 @@ class UserInputTracker:
         
         try:
             key_name = key.char if hasattr(key, 'char') else str(key)
-        except:
+        except AttributeError:
             key_name = str(key)
         
         event = InputEvent(
@@ -371,12 +371,16 @@ if __name__ == "__main__":
     tracker = get_tracker()
     
     print("Starting input tracking for 10 seconds...")
+    print("Press Ctrl+C to stop early")
     tracker.start_tracking()
     
     try:
-        time.sleep(10)
+        # More responsive sleep with progress indication
+        for i in range(10):
+            time.sleep(1)
+            print(f"Tracking... {10-i} seconds remaining")
     except KeyboardInterrupt:
-        pass
+        print("\nStopped by user")
     
     tracker.stop_tracking()
     
