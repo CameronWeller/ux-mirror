@@ -13,19 +13,17 @@ Usage:
     python simple_ux_tester.py analyze
 """
 
-import os
-import sys
-import time
 import argparse
 import json
+import logging
+import time
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
+
 import cv2
 import numpy as np
 from PIL import Image, ImageGrab
-import logging
-import base64
-from io import BytesIO
 
 # Configure logging to be less noisy
 logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
@@ -35,21 +33,18 @@ try:
     import openai
     OPENAI_AVAILABLE = True
 except ImportError:
-    openai = None
     OPENAI_AVAILABLE = False
 
 try:
     import anthropic
     ANTHROPIC_AVAILABLE = True
 except ImportError:
-    anthropic = None
     ANTHROPIC_AVAILABLE = False
 
 try:
     import requests
     REQUESTS_AVAILABLE = True
 except ImportError:
-    requests = None
     REQUESTS_AVAILABLE = False
 
 class SimpleUXTester:
@@ -70,30 +65,36 @@ class SimpleUXTester:
             'content_validation_enabled': True
         }
         
+        config_file = Path('config.env')
+        if not config_file.exists():
+            print("No config.env found, using defaults")
+            return config
+        
         try:
-            with open('config.env', 'r') as f:
+            with open(config_file, 'r') as f:
                 for line in f:
                     if '=' in line and not line.strip().startswith('#'):
                         key, value = line.strip().split('=', 1)
-                        if key == 'RESPONSE_TIME_THRESHOLD':
-                            config['response_time_threshold'] = int(value) if value else 500
-                        elif key == 'UI_CHANGE_THRESHOLD':
-                            config['ui_change_threshold'] = float(value) if value else 0.05
-                        elif key == 'SCREENSHOT_QUALITY':
-                            config['screenshot_quality'] = int(value) if value else 85
-                        elif key == 'OPENAI_API_KEY':
-                            config['openai_api_key'] = value
-                        elif key == 'GOOGLE_VISION_API_KEY':
-                            config['google_vision_api_key'] = value
-                        elif key == 'ANTHROPIC_API_KEY':
-                            config['anthropic_api_key'] = value
-        except FileNotFoundError:
-            print("No config.env found, using defaults")
+                        
+                        config_mapping = {
+                            'RESPONSE_TIME_THRESHOLD': ('response_time_threshold', int),
+                            'UI_CHANGE_THRESHOLD': ('ui_change_threshold', float),
+                            'SCREENSHOT_QUALITY': ('screenshot_quality', int),
+                            'OPENAI_API_KEY': ('openai_api_key', str),
+                            'GOOGLE_VISION_API_KEY': ('google_vision_api_key', str),
+                            'ANTHROPIC_API_KEY': ('anthropic_api_key', str)
+                        }
+                        
+                        if key in config_mapping and value:
+                            config_key, config_type = config_mapping[key]
+                            config[config_key] = config_type(value)
+        except Exception as e:
+            print(f"Error loading config: {e}")
             
         return config
     
-    def capture_screenshot(self, label="screenshot"):
-        """Capture a screenshot with timestamp"""
+    def capture_screenshot(self, label="screenshot", expected_content=None):
+        """Capture a screenshot with timestamp and optional content expectation"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
         filename = f"{timestamp}_{label}.png"
         filepath = self.output_dir / filename
@@ -113,6 +114,9 @@ class SimpleUXTester:
             'capture_time': datetime.now().isoformat()
         }
         
+        if expected_content:
+            metadata['expected_content'] = expected_content
+        
         metadata_file = filepath.with_suffix('.json')
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -121,24 +125,12 @@ class SimpleUXTester:
         return filepath, metadata
     
     def capture_before(self, expected_content=None):
-        """Capture 'before' screenshot with optional content expectation"""
-        filepath, metadata = self.capture_screenshot("before")
-        if expected_content:
-            metadata['expected_content'] = expected_content
-            metadata_file = filepath.with_suffix('.json')
-            with open(metadata_file, 'w') as f:
-                json.dump(metadata, f, indent=2)
-        return filepath, metadata
+        """Capture 'before' screenshot"""
+        return self.capture_screenshot("before", expected_content)
     
     def capture_after(self, expected_content=None):
-        """Capture 'after' screenshot with optional content expectation"""
-        filepath, metadata = self.capture_screenshot("after")
-        if expected_content:
-            metadata['expected_content'] = expected_content
-            metadata_file = filepath.with_suffix('.json')
-            with open(metadata_file, 'w') as f:
-                json.dump(metadata, f, indent=2)
-        return filepath, metadata
+        """Capture 'after' screenshot"""
+        return self.capture_screenshot("after", expected_content)
     
     def find_latest_pair(self):
         """Find the most recent before/after screenshot pair"""

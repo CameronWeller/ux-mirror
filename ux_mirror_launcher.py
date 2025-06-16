@@ -10,28 +10,29 @@ Features:
 - Cursor integration ready
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox
 import asyncio
-import threading
-import psutil
-import subprocess
-import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 import json
-from datetime import datetime
+import logging
+import subprocess
+import threading
 import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import psutil
+import tkinter as tk
+from tkinter import messagebox, ttk
 
 # UX-MIRROR imports
 try:
-    from core.port_manager import get_port_manager, PortManager
-    from core.adaptive_feedback import AdaptiveFeedbackEngine, UserEngagementAction
-    from core.secure_config import get_config_manager
-    from ui.dark_theme import DarkTheme
     from agents.core_orchestrator import CoreOrchestrator
     from agents.visual_analysis_agent import VisualAnalysisAgent
+    from core.adaptive_feedback import AdaptiveFeedbackEngine, UserEngagementAction
+    from core.port_manager import PortManager, get_port_manager
+    from core.secure_config import get_config_manager
     from game_testing_session import GameUXTestingController
+    from ui.dark_theme import DarkTheme
 except ImportError as e:
     print(f"Warning: Could not import UX-MIRROR modules: {e}")
 
@@ -42,29 +43,26 @@ logger = logging.getLogger(__name__)
 class ApplicationDetector:
     """Detects and categorizes running applications for UX analysis"""
     
-    def __init__(self):
-        self.app_categories = {
-            'games': {
-                'keywords': ['game', 'unity', 'unreal', 'pygame', 'steam'],
-                'extensions': ['.exe'],
-                'processes': ['UnityPlayer.dll', 'UE4Game', 'steam.exe']
-            },
-            'productivity': {
-                'keywords': ['office', 'word', 'excel', 'notepad', 'code', 'visual studio'],
-                'extensions': ['.exe'],
-                'processes': ['winword.exe', 'excel.exe', 'code.exe', 'devenv.exe']
-            },
-            'web_browsers': {
-                'keywords': ['chrome', 'firefox', 'edge', 'safari', 'browser'],
-                'extensions': ['.exe'],
-                'processes': ['chrome.exe', 'firefox.exe', 'msedge.exe']
-            },
-            'development': {
-                'keywords': ['code', 'studio', 'intellij', 'cursor', 'atom'],
-                'extensions': ['.exe'],
-                'processes': ['code.exe', 'cursor.exe', 'idea64.exe']
-            }
+    APP_CATEGORIES = {
+        'games': {
+            'keywords': ['game', 'unity', 'unreal', 'pygame', 'steam'],
+            'processes': ['UnityPlayer.dll', 'UE4Game', 'steam.exe']
+        },
+        'productivity': {
+            'keywords': ['office', 'word', 'excel', 'notepad', 'code', 'visual studio'],
+            'processes': ['winword.exe', 'excel.exe', 'code.exe', 'devenv.exe']
+        },
+        'web_browsers': {
+            'keywords': ['chrome', 'firefox', 'edge', 'safari', 'browser'],
+            'processes': ['chrome.exe', 'firefox.exe', 'msedge.exe']
+        },
+        'development': {
+            'keywords': ['code', 'studio', 'intellij', 'cursor', 'atom'],
+            'processes': ['code.exe', 'cursor.exe', 'idea64.exe']
         }
+    }
+    
+    SYSTEM_PROCESSES = {'system', 'svchost.exe', 'dwm.exe', 'explorer.exe'}
     
     def detect_applications(self) -> List[Dict[str, Any]]:
         """Detect running applications suitable for UX analysis"""
@@ -73,70 +71,62 @@ class ApplicationDetector:
         try:
             for proc in psutil.process_iter(['pid', 'name', 'exe', 'cmdline', 'memory_info']):
                 try:
-                    pinfo = proc.info
-                    if not pinfo['name'] or not pinfo['exe']:
-                        continue
-                    
-                    # Skip system processes
-                    if pinfo['name'].lower() in ['system', 'svchost.exe', 'dwm.exe', 'explorer.exe']:
-                        continue
-                    
-                    # Categorize the application
-                    category = self._categorize_application(pinfo)
-                    if category:
-                        app_info = {
-                            'pid': pinfo['pid'],
-                            'name': pinfo['name'],
-                            'exe_path': pinfo['exe'],
-                            'category': category,
-                            'memory_mb': pinfo['memory_info'].rss / 1024 / 1024 if pinfo['memory_info'] else 0,
-                            'display_name': self._create_display_name(pinfo)
-                        }
+                    app_info = self._process_to_app_info(proc.info)
+                    if app_info:
                         applications.append(app_info)
-                        
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     continue
-                    
         except Exception as e:
             logger.error(f"Error detecting applications: {e}")
         
         # Sort by memory usage (larger apps first)
-        applications.sort(key=lambda x: x['memory_mb'], reverse=True)
+        return sorted(applications, key=lambda x: x['memory_mb'], reverse=True)
+    
+    def _process_to_app_info(self, pinfo: Dict) -> Optional[Dict[str, Any]]:
+        """Convert process info to application info if valid"""
+        if not pinfo.get('name') or not pinfo.get('exe'):
+            return None
         
-        return applications
+        # Skip system processes
+        if pinfo['name'].lower() in self.SYSTEM_PROCESSES:
+            return None
+        
+        category = self._categorize_application(pinfo)
+        if not category:
+            return None
+        
+        memory_mb = pinfo['memory_info'].rss / 1024 / 1024 if pinfo.get('memory_info') else 0
+        
+        return {
+            'pid': pinfo['pid'],
+            'name': pinfo['name'],
+            'exe_path': pinfo['exe'],
+            'category': category,
+            'memory_mb': memory_mb,
+            'display_name': self._create_display_name(pinfo, memory_mb)
+        }
     
     def _categorize_application(self, pinfo: Dict) -> Optional[str]:
         """Categorize an application based on its properties"""
         name = pinfo['name'].lower()
-        exe_path = pinfo['exe'].lower() if pinfo['exe'] else ''
+        exe_path = (pinfo.get('exe') or '').lower()
         
-        for category, criteria in self.app_categories.items():
-            # Check by keywords
-            for keyword in criteria['keywords']:
-                if keyword in name or keyword in exe_path:
-                    return category
-            
-            # Check by specific process names
+        for category, criteria in self.APP_CATEGORIES.items():
+            # Check keywords and processes
+            if any(keyword in name or keyword in exe_path for keyword in criteria['keywords']):
+                return category
             if name in [p.lower() for p in criteria['processes']]:
                 return category
         
         # Default category for GUI applications
-        if '.exe' in exe_path and 'windows' not in exe_path and 'system32' not in exe_path:
+        if '.exe' in exe_path and not any(x in exe_path for x in ['windows', 'system32']):
             return 'other'
         
         return None
     
-    def _create_display_name(self, pinfo: Dict) -> str:
+    def _create_display_name(self, pinfo: Dict, memory_mb: float) -> str:
         """Create a user-friendly display name"""
-        name = pinfo['name']
-        if name.endswith('.exe'):
-            name = name[:-4]
-        
-        # Capitalize and clean up
-        name = name.replace('_', ' ').replace('-', ' ').title()
-        
-        # Add memory info
-        memory_mb = pinfo['memory_info'].rss / 1024 / 1024 if pinfo['memory_info'] else 0
+        name = pinfo['name'].replace('.exe', '').replace('_', ' ').replace('-', ' ').title()
         return f"{name} ({memory_mb:.0f} MB)"
 
 class UXMirrorLauncher:
@@ -183,74 +173,87 @@ class UXMirrorLauncher:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         
-        # Header with proper grid layout
-        header_frame = ttk.Frame(main_frame, style="Dark.TFrame")
-        header_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 30))
-        header_frame.columnconfigure(1, weight=1)  # Center column expands
+        # Create UI sections
+        self._create_header(main_frame)
+        self._create_app_selection(main_frame)
+        self._create_analysis_config(main_frame)
+        self._create_control_buttons(main_frame)
+        self._create_status_section(main_frame)
         
-        # Left side - Title and subtitle
+        # Configure grid weights for resizing
+        main_frame.rowconfigure(4, weight=1)
+        
+        # Initial log message
+        self.log_message("🎯 UX-MIRROR Launcher ready")
+    
+    def _create_header(self, parent):
+        """Create header section"""
+        header_frame = ttk.Frame(parent, style="Dark.TFrame")
+        header_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 30))
+        header_frame.columnconfigure(1, weight=1)
+        
+        # Title and subtitle
         title_section = ttk.Frame(header_frame, style="Dark.TFrame")
         title_section.grid(row=0, column=0, sticky=tk.W)
         
-        title_label = ttk.Label(title_section, text="🎯 UX-MIRROR", 
-                               style="DarkTitle.TLabel")
-        title_label.pack(anchor=tk.W)
+        ttk.Label(title_section, text="🎯 UX-MIRROR", style="DarkTitle.TLabel").pack(anchor=tk.W)
+        ttk.Label(title_section, text="Intelligent UX Analysis for Any Application", 
+                 style="DarkSubtitle.TLabel").pack(anchor=tk.W, pady=(5, 0))
         
-        subtitle_label = ttk.Label(title_section, text="Intelligent UX Analysis for Any Application", 
-                                 style="DarkSubtitle.TLabel")
-        subtitle_label.pack(anchor=tk.W, pady=(5, 0))
-        
-        # Right side - Settings button properly positioned
-        settings_button = ttk.Button(header_frame, text="⚙️ Settings", 
-                                   style="Dark.TButton",
-                                   command=self.open_settings_dialog)
-        settings_button.grid(row=0, column=2, sticky=tk.E, padx=(20, 0))
-        
-        # Application selection section with improved layout
-        app_frame = ttk.LabelFrame(main_frame, text="🎯 Target Application", style="Dark.TLabelframe", padding="15")
+        # Settings button
+        ttk.Button(header_frame, text="⚙️ Settings", style="Dark.TButton",
+                  command=self.open_settings_dialog).grid(row=0, column=2, sticky=tk.E, padx=(20, 0))
+    
+    def _create_app_selection(self, parent):
+        """Create application selection section"""
+        app_frame = ttk.LabelFrame(parent, text="🎯 Target Application", style="Dark.TLabelframe", padding="15")
         app_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 25))
         app_frame.columnconfigure(0, weight=1)
         app_frame.rowconfigure(1, weight=1)
         
-        # App selection controls with better spacing
+        # Controls
         controls_frame = ttk.Frame(app_frame, style="Dark.TFrame")
         controls_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         controls_frame.columnconfigure(1, weight=1)
         
-        instruction_label = ttk.Label(controls_frame, text="Select application to analyze:", 
-                                    style="DarkSubtitle.TLabel")
-        instruction_label.grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(controls_frame, text="Select application to analyze:", 
+                 style="DarkSubtitle.TLabel").grid(row=0, column=0, sticky=tk.W)
         
         self.refresh_button = ttk.Button(controls_frame, text="🔄 Refresh Apps", 
-                                       style="Dark.TButton",
-                                       command=self.refresh_applications)
+                                       style="Dark.TButton", command=self.refresh_applications)
         self.refresh_button.grid(row=0, column=2, sticky=tk.E, padx=(15, 0))
         
         # Application list
-        list_frame = ttk.Frame(app_frame, style="Dark.TFrame")
+        self._create_app_tree(app_frame)
+    
+    def _create_app_tree(self, parent):
+        """Create application treeview"""
+        list_frame = ttk.Frame(parent, style="Dark.TFrame")
         list_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         list_frame.columnconfigure(0, weight=1)
         list_frame.rowconfigure(0, weight=1)
         
-        # Create treeview for applications
+        # Treeview
         columns = ('name', 'category', 'memory', 'pid')
-        self.app_tree = ttk.Treeview(list_frame, columns=columns, show='tree headings', height=8, style="Dark.Treeview")
+        self.app_tree = ttk.Treeview(list_frame, columns=columns, show='tree headings', 
+                                    height=8, style="Dark.Treeview")
         
         # Configure columns
-        self.app_tree.heading('#0', text='Application')
-        self.app_tree.heading('name', text='Process Name')
-        self.app_tree.heading('category', text='Category')
-        self.app_tree.heading('memory', text='Memory')
-        self.app_tree.heading('pid', text='PID')
+        column_config = [
+            ('#0', 'Application', 200),
+            ('name', 'Process Name', 150),
+            ('category', 'Category', 100),
+            ('memory', 'Memory', 80),
+            ('pid', 'PID', 60)
+        ]
         
-        self.app_tree.column('#0', width=200)
-        self.app_tree.column('name', width=150)
-        self.app_tree.column('category', width=100)
-        self.app_tree.column('memory', width=80)
-        self.app_tree.column('pid', width=60)
+        for col_id, heading, width in column_config:
+            self.app_tree.heading(col_id, text=heading)
+            self.app_tree.column(col_id, width=width)
         
-        # Scrollbar for treeview
-        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.app_tree.yview, style="Dark.Vertical.TScrollbar")
+        # Scrollbar
+        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.app_tree.yview, 
+                                 style="Dark.Vertical.TScrollbar")
         self.app_tree.configure(yscrollcommand=scrollbar.set)
         
         self.app_tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -258,78 +261,95 @@ class UXMirrorLauncher:
         
         # Bind selection event
         self.app_tree.bind('<<TreeviewSelect>>', self.on_app_selected)
-        
-        # Analysis configuration section with improved layout
-        config_frame = ttk.LabelFrame(main_frame, text="⚙️ Analysis Configuration", style="Dark.TLabelframe", padding="15")
+    
+    def _create_analysis_config(self, parent):
+        """Create analysis configuration section"""
+        config_frame = ttk.LabelFrame(parent, text="⚙️ Analysis Configuration", 
+                                    style="Dark.TLabelframe", padding="15")
         config_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 25))
         config_frame.columnconfigure(1, weight=1)
         
-        # Analysis mode with better spacing
-        mode_label = ttk.Label(config_frame, text="Analysis Mode:", style="DarkSubtitle.TLabel")
-        mode_label.grid(row=0, column=0, sticky=(tk.W, tk.N), pady=(5, 15), padx=(0, 20))
+        # Analysis mode
+        ttk.Label(config_frame, text="Analysis Mode:", 
+                 style="DarkSubtitle.TLabel").grid(row=0, column=0, sticky=(tk.W, tk.N), 
+                                                  pady=(5, 15), padx=(0, 20))
         
         self.analysis_mode = tk.StringVar(value="adaptive")
         mode_frame = ttk.Frame(config_frame, style="Dark.TFrame")
         mode_frame.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=(5, 15))
         
-        ttk.Radiobutton(mode_frame, text="🎯 Adaptive (Recommended)", 
-                       variable=self.analysis_mode, value="adaptive", style="Dark.TRadiobutton").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(mode_frame, text="🔄 Continuous", 
-                       variable=self.analysis_mode, value="continuous", style="Dark.TRadiobutton").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(mode_frame, text="⚡ One-Shot", 
-                       variable=self.analysis_mode, value="oneshot", style="Dark.TRadiobutton").pack(anchor=tk.W, pady=2)
+        modes = [
+            ("🎯 Adaptive (Recommended)", "adaptive"),
+            ("🔄 Continuous", "continuous"),
+            ("⚡ One-Shot", "oneshot")
+        ]
         
-        # Analysis options with improved layout
-        options_label = ttk.Label(config_frame, text="Options:", style="DarkSubtitle.TLabel")
-        options_label.grid(row=1, column=0, sticky=(tk.W, tk.N), pady=(5, 5), padx=(0, 20))
+        for text, value in modes:
+            ttk.Radiobutton(mode_frame, text=text, variable=self.analysis_mode, 
+                          value=value, style="Dark.TRadiobutton").pack(anchor=tk.W, pady=2)
+        
+        # Options
+        ttk.Label(config_frame, text="Options:", 
+                 style="DarkSubtitle.TLabel").grid(row=1, column=0, sticky=(tk.W, tk.N), 
+                                                  pady=(5, 5), padx=(0, 20))
         
         options_frame = ttk.Frame(config_frame, style="Dark.TFrame")
         options_frame.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=(5, 5))
         
         self.capture_user_input = tk.BooleanVar(value=True)
-        ttk.Checkbutton(options_frame, text="📝 Capture user input", 
-                       variable=self.capture_user_input, style="Dark.TCheckbutton").pack(anchor=tk.W, pady=3)
-        
         self.show_analysis_overlay = tk.BooleanVar(value=True)
-        ttk.Checkbutton(options_frame, text="👁️ Show analysis overlay", 
-                       variable=self.show_analysis_overlay, style="Dark.TCheckbutton").pack(anchor=tk.W, pady=3)
         
-        # Control buttons with improved centering and spacing
-        button_frame = ttk.Frame(main_frame, style="Dark.TFrame")
+        ttk.Checkbutton(options_frame, text="📝 Capture user input", 
+                       variable=self.capture_user_input, 
+                       style="Dark.TCheckbutton").pack(anchor=tk.W, pady=3)
+        ttk.Checkbutton(options_frame, text="👁️ Show analysis overlay", 
+                       variable=self.show_analysis_overlay, 
+                       style="Dark.TCheckbutton").pack(anchor=tk.W, pady=3)
+    
+    def _create_control_buttons(self, parent):
+        """Create control buttons"""
+        button_frame = ttk.Frame(parent, style="Dark.TFrame")
         button_frame.grid(row=3, column=0, columnspan=2, pady=(10, 30))
         
-        # Center the button frame
-        main_frame.grid_rowconfigure(3, weight=0)
+        buttons = [
+            ("🚀 Start Analysis", self.start_analysis, 'start_button'),
+            ("� Stop Analysis", self.stop_analysis, 'stop_button'),
+            ("💬 Provide Feedback", self.open_feedback_dialog, 'feedback_button')
+        ]
         
-        self.start_button = ttk.Button(button_frame, text="🚀 Start Analysis", 
-                                     command=self.start_analysis, style='Dark.TButton')
-        self.start_button.pack(side=tk.LEFT, padx=(0, 15), ipadx=10, ipady=5)
+        for text, command, attr_name in buttons:
+            btn = ttk.Button(button_frame, text=text, command=command, style='Dark.TButton')
+            btn.pack(side=tk.LEFT, padx=(0, 15), ipadx=10, ipady=5)
+            setattr(self, attr_name, btn)
         
-        self.stop_button = ttk.Button(button_frame, text="🛑 Stop Analysis", 
-                                    command=self.stop_analysis, style='Dark.TButton', state='disabled')
-        self.stop_button.pack(side=tk.LEFT, padx=(0, 15), ipadx=10, ipady=5)
-        
-        self.feedback_button = ttk.Button(button_frame, text="💬 Provide Feedback", 
-                                        command=self.open_feedback_dialog, style='Dark.TButton', state='disabled')
-        self.feedback_button.pack(side=tk.LEFT, ipadx=10, ipady=5)
-        
-        # Status section with improved layout
-        status_frame = ttk.LabelFrame(main_frame, text="📊 Analysis Status", style="Dark.TLabelframe", padding="15")
+        # Disable stop and feedback buttons initially
+        self.stop_button.config(state='disabled')
+        self.feedback_button.config(state='disabled')
+    
+    def _create_status_section(self, parent):
+        """Create status section"""
+        status_frame = ttk.LabelFrame(parent, text="📊 Analysis Status", 
+                                    style="Dark.TLabelframe", padding="15")
         status_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S))
         status_frame.columnconfigure(0, weight=1)
         status_frame.rowconfigure(2, weight=1)
         
-        # Status info with better styling
+        # Status text
         self.status_text = tk.StringVar(value="✅ Ready to start analysis")
-        status_label = ttk.Label(status_frame, textvariable=self.status_text, style="DarkSubtitle.TLabel")
-        status_label.grid(row=0, column=0, sticky=tk.W, pady=(5, 15))
+        ttk.Label(status_frame, textvariable=self.status_text, 
+                 style="DarkSubtitle.TLabel").grid(row=0, column=0, sticky=tk.W, pady=(5, 15))
         
-        # Progress bar with better spacing
-        self.progress = ttk.Progressbar(status_frame, mode='indeterminate', style="Dark.Horizontal.TProgressbar")
+        # Progress bar
+        self.progress = ttk.Progressbar(status_frame, mode='indeterminate', 
+                                       style="Dark.Horizontal.TProgressbar")
         self.progress.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         
-        # Log area with improved frame
-        log_container = ttk.Frame(status_frame, style="Dark.TFrame")
+        # Log area
+        self._create_log_area(status_frame)
+    
+    def _create_log_area(self, parent):
+        """Create log text area"""
+        log_container = ttk.Frame(parent, style="Dark.TFrame")
         log_container.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         log_container.columnconfigure(0, weight=1)
         log_container.rowconfigure(0, weight=1)
@@ -337,15 +357,10 @@ class UXMirrorLauncher:
         self.log_text = DarkTheme.create_text_widget(log_container, height=8, wrap=tk.WORD)
         self.log_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        log_scroll = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.log_text.yview, style="Dark.Vertical.TScrollbar")
+        log_scroll = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.log_text.yview, 
+                                  style="Dark.Vertical.TScrollbar")
         self.log_text.configure(yscrollcommand=log_scroll.set)
         log_scroll.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        
-        # Configure grid weights for resizing
-        main_frame.rowconfigure(4, weight=1)
-        
-        # Initial log message
-        self.log_message("🎯 UX-MIRROR Launcher ready")
     
     def refresh_applications(self):
         """Refresh the list of available applications"""
