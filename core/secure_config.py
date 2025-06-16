@@ -103,7 +103,8 @@ class SecureConfigManager:
         if not self.crypto_available:
             try:
                 return base64.b64decode(encrypted_data.encode()).decode()
-            except:
+            except (ValueError, TypeError, UnicodeDecodeError) as e:
+                logger.warning(f"Base64 decoding failed: {e}")
                 return encrypted_data  # Return as-is if decoding fails
         
         try:
@@ -117,7 +118,8 @@ class SecureConfigManager:
             logger.warning(f"Decryption failed, trying base64: {e}")
             try:
                 return base64.b64decode(encrypted_data.encode()).decode()
-            except:
+            except (ValueError, TypeError, UnicodeDecodeError) as e:
+                logger.error(f"All decryption methods failed: {e}")
                 return encrypted_data  # Return as-is if all fails
     
     def set_api_key(self, provider: str, api_key: str) -> bool:
@@ -268,7 +270,8 @@ class SecureConfigManager:
                     if keyring.get_password(self.app_name, key_name):
                         if provider not in providers:
                             providers.append(provider)
-                except:
+                except (keyring.errors.KeyringError, Exception) as e:
+                    logger.debug(f"Failed to check keyring for {provider}: {e}")
                     pass
         
         return providers

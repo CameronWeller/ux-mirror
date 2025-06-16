@@ -271,21 +271,43 @@ def handle_stop_agent(args, config):
     """Stop specified agents."""
     print(f"🛑 Stopping {args.agent_type} agent(s)...")
     
-    # For now, use basic process killing
-    # In production, would use proper shutdown signals
-    import os
+    # Use secure subprocess.run instead of vulnerable os.system
+    import subprocess
     import signal
     
+    def safe_pkill(process_name):
+        """Safely kill processes by name using subprocess."""
+        try:
+            result = subprocess.run(
+                ['pkill', '-f', process_name], 
+                check=False, 
+                timeout=30,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print(f"✅ Successfully stopped processes matching: {process_name}")
+            elif result.returncode == 1:
+                print(f"⚠️  No processes found matching: {process_name}")
+            else:
+                print(f"❌ Error stopping processes: {result.stderr}")
+        except subprocess.TimeoutExpired:
+            print(f"⏰ Timeout while stopping processes matching: {process_name}")
+        except FileNotFoundError:
+            print("❌ 'pkill' command not found. Unable to stop processes.")
+        except Exception as e:
+            print(f"❌ Unexpected error stopping processes: {e}")
+    
     if args.agent_type == 'all':
-        os.system("pkill -f 'core_orchestrator.py'")
-        os.system("pkill -f 'visual_analysis_agent.py'")
-        os.system("pkill -f 'metrics_intelligence.py'")
+        safe_pkill('core_orchestrator.py')
+        safe_pkill('visual_analysis_agent.py')
+        safe_pkill('metrics_intelligence.py')
     elif args.agent_type == 'orchestrator':
-        os.system("pkill -f 'core_orchestrator.py'")
+        safe_pkill('core_orchestrator.py')
     elif args.agent_type == 'visual':
-        os.system("pkill -f 'visual_analysis_agent.py'")
+        safe_pkill('visual_analysis_agent.py')
     elif args.agent_type == 'metrics':
-        os.system("pkill -f 'metrics_intelligence.py'")
+        safe_pkill('metrics_intelligence.py')
 
 
 def handle_agent_status(args, config):

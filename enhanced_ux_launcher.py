@@ -374,19 +374,39 @@ class EnhancedUXMirrorLauncher:
     def _open_report_file(self, file_path: str):
         """Open report file in default application"""
         try:
-            # Convert to absolute path
+            # Convert to absolute path and validate
             abs_path = os.path.abspath(file_path)
             
-            # Open in default browser/application
+            # Validate that the file exists and is actually a file
+            if not os.path.isfile(abs_path):
+                raise FileNotFoundError(f"Report file not found: {abs_path}")
+            
+            # Use secure subprocess calls instead of vulnerable os.system
+            import subprocess
+            import shlex
+            
             if platform.system() == 'Windows':
-                os.startfile(abs_path)
+                # Windows - use os.startfile (safe) or subprocess
+                try:
+                    os.startfile(abs_path)
+                except AttributeError:
+                    # Fallback for systems without startfile
+                    subprocess.run(['cmd', '/c', 'start', '', abs_path], check=False, timeout=30)
             elif platform.system() == 'Darwin':  # macOS
-                os.system(f'open "{abs_path}"')
-            else:  # Linux
-                os.system(f'xdg-open "{abs_path}"')
+                # macOS - secure subprocess call
+                subprocess.run(['open', abs_path], check=False, timeout=30)
+            else:  # Linux and others
+                # Linux - secure subprocess call
+                subprocess.run(['xdg-open', abs_path], check=False, timeout=30)
             
             self.log_message(f"Opened report: {abs_path}")
             
+        except subprocess.TimeoutExpired:
+            self.log_message("Timeout while opening report file")
+            messagebox.showerror("Error", "Timeout while opening report file")
+        except FileNotFoundError as e:
+            self.log_message(f"Report file not found: {e}")
+            messagebox.showerror("Error", f"Report file not found:\n{e}")
         except Exception as e:
             self.log_message(f"Failed to open report: {e}")
             messagebox.showerror("Error", f"Failed to open report:\n{e}")
