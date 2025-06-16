@@ -1,0 +1,37 @@
+{
+  "timestamp": "20250611_191253",
+  "session_name": "debug",
+  "game_state": {
+    "is_running": false,
+    "fps": null,
+    "generation": null,
+    "living_cells": null,
+    "paused": false,
+    "window_focused": true,
+    "performance_metrics": {
+      "fps_category": "unknown",
+      "text_regions_detected": 0,
+      "ui_elements_detected": 1,
+      "analysis_timestamp": "2025-06-11T19:12:53.288289"
+    }
+  },
+  "detected_elements": {
+    "settings_button": [
+      {
+        "name": "settings_button",
+        "confidence": 0.8,
+        "position": [
+          1234,
+          725
+        ],
+        "bounds": [
+          1224,
+          715,
+          20,
+          20
+        ],
+        "element_type": "color_detection"
+      }
+    ]
+  }
+}

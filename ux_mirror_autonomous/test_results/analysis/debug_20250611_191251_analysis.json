@@ -1,0 +1,19 @@
+{
+  "timestamp": "20250611_191251",
+  "session_name": "debug",
+  "game_state": {
+    "is_running": false,
+    "fps": null,
+    "generation": null,
+    "living_cells": null,
+    "paused": false,
+    "window_focused": false,
+    "performance_metrics": {
+      "fps_category": "unknown",
+      "text_regions_detected": 0,
+      "ui_elements_detected": 0,
+      "analysis_timestamp": "2025-06-11T19:12:51.021359"
+    }
+  },
+  "detected_elements": {}
+}

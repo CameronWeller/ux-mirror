@@ -38,6 +38,12 @@ RUNNER = AUTONOMOUS_DIR / "run_tests.py"
 RESULTS_BASE = PROJECT_ROOT / "ux_results"
 HOOKS: List[Callable[[str], None]] = []  # Simple line-level hooks
 
+# Force UTF-8 console on Windows to avoid emoji encode errors
+if os.name == "nt":
+    try:
+        os.system("chcp 65001 >nul")  # switch code page silently
+    except Exception:
+        pass
 
 def _timestamp() -> str:
     return _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -72,6 +78,16 @@ def main(argv: List[str] | None = None) -> None:  # noqa: C901 (keep single fn)
         choices=[1, 2, 3],
         help="Maximum priority level to run (optional)",
     )
+    parser.add_argument(
+        "--sentinel",
+        action="store_true",
+        help="Emit a sentinel line at the very end so external agents can react",
+    )
+    parser.add_argument(
+        "--game-exe",
+        type=str,
+        help="Path to game executable (overrides default detection)",
+    )
     args = parser.parse_args(argv)
 
     # Verify runner exists
@@ -89,6 +105,12 @@ def main(argv: List[str] | None = None) -> None:  # noqa: C901 (keep single fn)
     # Environment variables for downstream tools
     env = os.environ.copy()
     env["UX_SESSION_DIR"] = str(session_dir)
+    # Ensure package imports resolve and Unicode prints work
+    env["PYTHONPATH"] = str(PROJECT_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONIOENCODING"] = env.get("PYTHONIOENCODING", "utf-8")
+
+    if args.game_exe:
+        env["UX_GAME_EXE"] = args.game_exe
 
     # Build runner command
     cmd = [
@@ -114,6 +136,8 @@ def main(argv: List[str] | None = None) -> None:  # noqa: C901 (keep single fn)
             stdout=_sp.PIPE,
             stderr=_sp.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",  # avoid crashes on unexpected bytes
             bufsize=1,
         )
 
@@ -139,6 +163,10 @@ def main(argv: List[str] | None = None) -> None:  # noqa: C901 (keep single fn)
 
     if exit_code != 0:
         sys.exit(exit_code)
+
+    if args.sentinel:
+        # Emit easily-detectable sentinel line for external tools.
+        print("<<<SENTINEL>>> well how did it go")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,94 @@
+{
+  "3d_game_of_life": {
+    "window_title": "3D Game of Life",
+    "ui_elements": {
+      "play_button": {
+        "color_range": [
+          [
+            0,
+            255,
+            0
+          ],
+          [
+            50,
+            255,
+            50
+          ]
+        ]
+      },
+      "pause_button": {
+        "color_range": [
+          [
+            255,
+            255,
+            0
+          ],
+          [
+            255,
+            255,
+            50
+          ]
+        ]
+      },
+      "reset_button": {
+        "color_range": [
+          [
+            255,
+            0,
+            0
+          ],
+          [
+            255,
+            50,
+            50
+          ]
+        ]
+      },
+      "settings_button": {
+        "color_range": [
+          [
+            128,
+            128,
+            128
+          ],
+          [
+            200,
+            200,
+            200
+          ]
+        ]
+      }
+    },
+    "text_regions": {
+      "fps_counter": {
+        "region": [
+          10,
+          10,
+          200,
+          50
+        ]
+      },
+      "generation_counter": {
+        "region": [
+          10,
+          60,
+          200,
+          100
+        ]
+      },
+      "cell_count": {
+        "region": [
+          10,
+          110,
+          200,
+          150
+        ]
+      }
+    },
+    "performance_indicators": {
+      "fps_good": 60,
+      "fps_acceptable": 30,
+      "fps_poor": 15
+    }
+  }
+}

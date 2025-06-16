@@ -430,6 +430,18 @@ class ScreenAnalyzer:
             if self.config["debug_mode"]:
                 logger.info(f"Game State: Running={is_running}, FPS={fps}, Gen={generation}, Cells={living_cells}")
             
+                # Save annotated analysis image for easier inspection
+                try:
+                    detected_elements = self.find_ui_elements(screenshot)
+                    self.save_analysis_result(
+                        screenshot,
+                        game_state,
+                        detected_elements,
+                        session_name="debug"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to save debug analysis image: {e}")
+            
             return game_state
             
         except Exception as e:

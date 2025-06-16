@@ -1,0 +1,55 @@
+name: asm-regression-guard
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  asm-diff:
+    name: Disassembly diff check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for diffing
+
+      - name: Install toolchain dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential binutils python3 python3-pip linux-tools-common linux-tools-generic
+
+      - name: Build (if applicable)
+        run: |
+          make build || echo "No build step defined. Skipping."
+
+      - name: Dump assembly listings
+        run: |
+          chmod +x scripts/dump_disassembly.sh
+          ./scripts/dump_disassembly.sh
+
+      - name: Compare assembly with base branch
+        id: diffcheck
+        run: |
+          # Fetch base branch for pull requests; default to origin/main otherwise
+          BASE_REF="${{ github.base_ref }}"
+          if [ -z "$BASE_REF" ]; then BASE_REF="main"; fi
+          git fetch origin "$BASE_REF" --depth=1 || true
+          set +e
+          git diff --stat "origin/$BASE_REF" -- build/asm > asm.diff
+          COUNT=$(wc -l < asm.diff)
+          echo "diff_lines=$COUNT" >> $GITHUB_OUTPUT
+          # Fail the job only if assembly changed AND there are more than 50 changed lines (noise threshold)
+          if [ "$COUNT" -gt 50 ]; then
+            echo "Assembly changed significantly (>$COUNT lines). Failing job. See diff below." && cat asm.diff && exit 1
+          else
+            echo "Assembly changes are minor ($COUNT lines). Allowing.\n----\n$(cat asm.diff)" || true
+          fi
+
+      - name: Upload assembly artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asm-dumps
+          path: build/asm 

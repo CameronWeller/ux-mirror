@@ -14,6 +14,7 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 import json
 import yaml
+from os import environ
 
 # Add the autonomous testing modules to path
 sys.path.append(str(Path(__file__).parent))
@@ -310,8 +311,16 @@ class AutonomousTestRunner:
         try:
             logger.info("🎮 Starting target application...")
             
+            # Check if a specific path is supplied via environment variable
+            env_path = environ.get("UX_GAME_EXE")
+
             # Look for the game executable
-            possible_paths = [
+            possible_paths = []
+
+            if env_path:
+                possible_paths.append(Path(env_path))
+
+            possible_paths += [
                 Path("game-target/build_minimal/x64/Release/minimal_vulkan_app.exe"),
                 Path("game-target/build/Release/minimal_vulkan_app.exe"),
                 Path("../game-target/build_minimal/x64/Release/minimal_vulkan_app.exe"),
