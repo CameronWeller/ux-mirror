@@ -31,6 +31,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 
+# Import centralized GPU Manager
+from core.gpu_manager import get_gpu_manager, ComputeBackend
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -64,23 +67,31 @@ class PerformanceMetric:
 class CUDAAcceleratedAnalytics:
     """GPU-accelerated analytics for user behavior patterns"""
     
-    def __init__(self, device=None):
-        if TORCH_AVAILABLE and torch.cuda.is_available():
-            self.device = torch.device("cuda")
-            self.use_gpu = True
-            self.behavior_predictor = self._init_behavior_model()
-            self.performance_analyzer = self._init_performance_model()
-            self.engagement_scorer = self._init_engagement_model()
-            logger.info("Using GPU-accelerated analytics")
-        else:
-            self.device = None
-            self.use_gpu = False
-            logger.info("Using CPU fallback analytics")
+    def __init__(self):
+        # Use centralized GPU Manager
+        self.gpu_manager = get_gpu_manager()
+        self.device = self.gpu_manager.get_device()
+        self.use_gpu = self.device and self.device.backend != ComputeBackend.CPU
+        
+        # Allocate memory for models if GPU available
+        if self.use_gpu:
+            allocated = self.gpu_manager.allocate_memory("metrics_intelligence_models", 500.0)  # 500MB for models
+            if not allocated:
+                logger.warning("Failed to allocate GPU memory, falling back to CPU")
+                self.use_gpu = False
+        
+        self.behavior_predictor = self._init_behavior_model()
+        self.performance_analyzer = self._init_performance_model()
+        self.engagement_scorer = self._init_engagement_model()
+        
+        backend_info = self.gpu_manager.get_backend_info()
+        logger.info(f"Using {backend_info['backend']} for analytics acceleration")
     
     def _init_behavior_model(self):
         """Initialize behavior prediction neural network"""
-        if not self.use_gpu:
+        if not self.use_gpu or not TORCH_AVAILABLE:
             return None
+            
         model = torch.nn.Sequential(
             torch.nn.Linear(20, 128),  # 20 features from interaction data
             torch.nn.ReLU(),
@@ -88,26 +99,31 @@ class CUDAAcceleratedAnalytics:
             torch.nn.Linear(128, 64),
             torch.nn.ReLU(),
             torch.nn.Linear(64, 10)  # 10 predicted behavior classes
-        ).to(self.device)
-        return model
+        )
+        
+        # Move model to device using GPU Manager
+        return self.gpu_manager.move_to_device(model)
     
     def _init_performance_model(self):
         """Initialize performance analysis model"""
-        if not self.use_gpu:
+        if not self.use_gpu or not TORCH_AVAILABLE:
             return None
+            
         model = torch.nn.Sequential(
             torch.nn.Linear(15, 64),  # 15 performance metrics
             torch.nn.ReLU(),
             torch.nn.Linear(64, 32),
             torch.nn.ReLU(),
             torch.nn.Linear(32, 5)  # 5 performance scores
-        ).to(self.device)
-        return model
+        )
+        
+        return self.gpu_manager.move_to_device(model)
     
     def _init_engagement_model(self):
         """Initialize engagement scoring model"""
-        if not self.use_gpu:
+        if not self.use_gpu or not TORCH_AVAILABLE:
             return None
+            
         model = torch.nn.Sequential(
             torch.nn.Linear(25, 128),  # 25 engagement features
             torch.nn.ReLU(),
@@ -116,12 +132,13 @@ class CUDAAcceleratedAnalytics:
             torch.nn.ReLU(),
             torch.nn.Linear(64, 1),  # Single engagement score
             torch.nn.Sigmoid()
-        ).to(self.device)
-        return model
+        )
+        
+        return self.gpu_manager.move_to_device(model)
     
     def predict_user_behavior(self, interaction_features):
         """Predict user behavior patterns"""
-        if not self.use_gpu:
+        if not self.use_gpu or not self.behavior_predictor:
             # Fallback: Simple rule-based prediction
             features = interaction_features if isinstance(interaction_features, list) else interaction_features.tolist()
             # Simple heuristic-based predictions
@@ -146,11 +163,14 @@ class CUDAAcceleratedAnalytics:
             return np.array(predictions)
         
         with torch.no_grad():
-            return self.behavior_predictor(interaction_features.to(self.device))
+            # Move features to device using GPU Manager
+            features_on_device = self.gpu_manager.move_to_device(interaction_features)
+            predictions = self.behavior_predictor(features_on_device)
+            return predictions.cpu().numpy()
     
     def analyze_performance(self, performance_features):
         """Analyze performance impact"""
-        if not self.use_gpu:
+        if not self.use_gpu or not self.performance_analyzer:
             # Fallback: Simple performance analysis
             features = performance_features if isinstance(performance_features, list) else performance_features.tolist()
             scores = []
@@ -168,11 +188,13 @@ class CUDAAcceleratedAnalytics:
             return np.array(scores)
         
         with torch.no_grad():
-            return self.performance_analyzer(performance_features.to(self.device))
+            features_on_device = self.gpu_manager.move_to_device(performance_features)
+            scores = self.performance_analyzer(features_on_device)
+            return scores.cpu().numpy()
     
     def score_engagement(self, engagement_features):
         """Score user engagement level"""
-        if not self.use_gpu:
+        if not self.use_gpu or not self.engagement_scorer:
             # Fallback: Simple engagement scoring
             features = engagement_features if isinstance(engagement_features, list) else engagement_features.tolist()
             scores = []
@@ -190,7 +212,9 @@ class CUDAAcceleratedAnalytics:
             return np.array(scores)
         
         with torch.no_grad():
-            return self.engagement_scorer(engagement_features.to(self.device))
+            features_on_device = self.gpu_manager.move_to_device(engagement_features)
+            scores = self.engagement_scorer(features_on_device)
+            return scores.cpu().numpy()
 
 class MetricsIntelligenceAgent:
     """
@@ -209,15 +233,12 @@ class MetricsIntelligenceAgent:
         self.orchestrator_port = orchestrator_port
         self.websocket = None
         
-        # GPU setup - handle case when PyTorch is not available
-        if TORCH_AVAILABLE:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            self.gpu_allocation = 0.3  # Default allocation
-        else:
-            self.device = None
-            self.gpu_allocation = 0.0
+        # Use centralized GPU Manager
+        self.gpu_manager = get_gpu_manager()
+        self.gpu_allocation = 0.3  # Default allocation
         
-        self.gpu_analytics = CUDAAcceleratedAnalytics(self.device)
+        # Initialize GPU analytics with new manager
+        self.gpu_analytics = CUDAAcceleratedAnalytics()
         
         # Data collection
         self.interaction_buffer = deque(maxlen=10000)
@@ -241,8 +262,8 @@ class MetricsIntelligenceAgent:
         self.user_behavior_cache = {}
         self.performance_alerts = []
         
-        device_info = f"{self.device}" if self.device else "CPU fallback"
-        logger.info(f"Metrics Intelligence Agent initialized on {device_info}")
+        backend_info = self.gpu_manager.get_backend_info()
+        logger.info(f"Metrics Intelligence Agent initialized on {backend_info['backend']} backend")
     
     async def start(self):
         """Start the metrics intelligence agent"""
@@ -279,7 +300,8 @@ class MetricsIntelligenceAgent:
                     "behavior_analysis", 
                     "performance_monitoring",
                     "predictive_analytics"
-                ]
+                ],
+                "gpu_backend": self.gpu_manager.get_backend_info()['backend']
             }
             await self.websocket.send(json.dumps(registration))
             
@@ -347,13 +369,19 @@ class MetricsIntelligenceAgent:
             
             # Extract features for GPU processing
             features = self._extract_interaction_features(recent_interactions)
-            features_tensor = torch.tensor(features, dtype=torch.float32)
+            
+            # Create tensor using GPU Manager
+            features_tensor = self.gpu_manager.create_tensor(features, dtype=torch.float32 if TORCH_AVAILABLE else None)
             
             # GPU-accelerated behavior prediction
             behavior_predictions = self.gpu_analytics.predict_user_behavior(features_tensor)
             
             # Process predictions
             await self._process_behavior_predictions(behavior_predictions, recent_interactions)
+            
+            # Clear GPU cache periodically to prevent memory issues
+            if len(self.interaction_buffer) % 1000 == 0:
+                self.gpu_manager.clear_cache()
             
         except Exception as e:
             logger.error(f"Error processing interaction batch: {e}")
@@ -403,9 +431,13 @@ class MetricsIntelligenceAgent:
         
         return features
     
-    async def _process_behavior_predictions(self, predictions: torch.Tensor, interactions: List[UserInteraction]):
+    async def _process_behavior_predictions(self, predictions, interactions: List[UserInteraction]):
         """Process behavior predictions and generate insights"""
-        predictions_np = predictions.cpu().numpy()
+        # Handle both torch tensors and numpy arrays
+        if hasattr(predictions, 'cpu'):
+            predictions_np = predictions.cpu().numpy()
+        else:
+            predictions_np = predictions  # Already numpy array from fallback
         
         # Analyze prediction patterns
         for i, (prediction, interaction) in enumerate(zip(predictions_np, interactions)):
@@ -520,7 +552,7 @@ class MetricsIntelligenceAgent:
                 if len(recent_metrics) > 10:
                     # Extract performance features
                     perf_features = self._extract_performance_features(recent_metrics)
-                    perf_tensor = torch.tensor(perf_features, dtype=torch.float32)
+                    perf_tensor = self.gpu_manager.create_tensor(perf_features, dtype=torch.float32 if TORCH_AVAILABLE else None)
                     
                     # GPU analysis
                     performance_scores = self.gpu_analytics.analyze_performance(perf_tensor)
@@ -967,7 +999,7 @@ class MetricsIntelligenceAgent:
         
         # Extract engagement features
         features = self._extract_engagement_features(session_interactions)
-        features_tensor = torch.tensor([features], dtype=torch.float32)
+        features_tensor = self.gpu_manager.create_tensor([features], dtype=torch.float32 if TORCH_AVAILABLE else None)
         
         # GPU-accelerated engagement scoring
         engagement_score = self.gpu_analytics.score_engagement(features_tensor)
