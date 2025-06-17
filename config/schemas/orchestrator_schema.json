@@ -1,0 +1,439 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Orchestrator Configuration Schema",
+  "description": "Schema for validating UX-MIRROR orchestrator configuration",
+  "type": "object",
+  "required": ["task_processing", "agent_management", "monitoring"],
+  "properties": {
+    "task_processing": {
+      "type": "object",
+      "description": "Task processing configuration",
+      "required": ["max_concurrent_tasks", "task_timeout", "max_retries"],
+      "properties": {
+        "max_concurrent_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum number of concurrent tasks"
+        },
+        "task_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Task timeout in seconds"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum number of task retries"
+        },
+        "load_balance_strategy": {
+          "type": "string",
+          "enum": ["least_loaded", "round_robin", "fastest_response", "random"],
+          "description": "Load balancing strategy"
+        },
+        "priority_weights": {
+          "type": "object",
+          "properties": {
+            "CRITICAL": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "HIGH": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "MEDIUM": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "LOW": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "task_assignment_strategies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["least_loaded", "round_robin", "fastest_response", "random"]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "agent_management": {
+      "type": "object",
+      "description": "Agent management configuration",
+      "required": ["heartbeat_timeout", "max_load_threshold"],
+      "properties": {
+        "heartbeat_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Agent heartbeat timeout in seconds"
+        },
+        "max_load_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Maximum agent load threshold"
+        },
+        "health_check_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Health check interval in seconds"
+        },
+        "registration_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Agent registration timeout in seconds"
+        },
+        "max_error_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum error count before agent is marked unhealthy"
+        },
+        "agent_recovery_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Agent recovery timeout in seconds"
+        },
+        "load_balancing_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Load balancing check interval in seconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "insights": {
+      "type": "object",
+      "description": "Insights generation configuration",
+      "properties": {
+        "generation_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Insights generation interval in seconds"
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum confidence threshold for insights"
+        },
+        "max_insights_per_minute": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum insights generated per minute"
+        },
+        "insight_aggregation_window": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Insight aggregation window in seconds"
+        },
+        "critical_insight_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Threshold for critical insights"
+        },
+        "insight_categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Enabled insight categories"
+        }
+      },
+      "additionalProperties": false
+    },
+    "monitoring": {
+      "type": "object",
+      "description": "System monitoring configuration",
+      "required": ["metrics_save_interval"],
+      "properties": {
+        "metrics_save_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Metrics save interval in seconds"
+        },
+        "cleanup_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cleanup interval in seconds"
+        },
+        "max_log_retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum log retention in days"
+        },
+        "health_check_endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/.*$"
+          },
+          "description": "Health check endpoint paths"
+        },
+        "alert_thresholds": {
+          "type": "object",
+          "properties": {
+            "memory_usage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Memory usage percentage threshold"
+            },
+            "cpu_usage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "CPU usage percentage threshold"
+            },
+            "task_queue_size": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Task queue size threshold"
+            },
+            "agent_error_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Agent error rate percentage threshold"
+            },
+            "response_time_threshold": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Response time threshold in seconds"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "api_endpoints": {
+      "type": "object",
+      "description": "API endpoint configuration",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^/.*$"
+      }
+    },
+    "security": {
+      "type": "object",
+      "description": "Security configuration",
+      "properties": {
+        "require_authentication": {
+          "type": "boolean",
+          "description": "Whether authentication is required"
+        },
+        "allowed_origins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed CORS origins"
+        },
+        "rate_limiting": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "requests_per_minute": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "burst_size": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "agent_verification": {
+          "type": "object",
+          "properties": {
+            "require_capabilities_validation": {
+              "type": "boolean"
+            },
+            "max_registration_attempts": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "performance": {
+      "type": "object",
+      "description": "Performance tuning configuration",
+      "properties": {
+        "websocket_max_size": {
+          "type": "integer",
+          "minimum": 1024,
+          "description": "Maximum WebSocket message size in bytes"
+        },
+        "websocket_ping_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "WebSocket ping interval in seconds"
+        },
+        "websocket_ping_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "WebSocket ping timeout in seconds"
+        },
+        "max_message_queue_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum message queue size"
+        },
+        "message_processing_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Message processing timeout in seconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "logging": {
+      "type": "object",
+      "description": "Logging configuration",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        },
+        "file": {
+          "type": "string",
+          "description": "Log file path"
+        },
+        "max_file_size": {
+          "type": "string",
+          "pattern": "^[0-9]+(KB|MB|GB)$",
+          "description": "Maximum log file size"
+        },
+        "backup_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of backup log files to keep"
+        },
+        "format": {
+          "type": "string",
+          "description": "Log message format"
+        },
+        "log_categories": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Enable/disable specific log categories"
+        }
+      },
+      "additionalProperties": false
+    },
+    "integration": {
+      "type": "object",
+      "description": "External integration configuration",
+      "properties": {
+        "external_apis": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "webhook_notifications": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "endpoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "database_integration": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "connection_string": {
+                  "type": "string"
+                },
+                "sync_interval": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "dashboard": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "auto_refresh_interval": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_displayed_tasks": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "experimental": {
+      "type": "object",
+      "description": "Experimental features configuration",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
