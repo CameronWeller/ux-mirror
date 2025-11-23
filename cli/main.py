@@ -185,6 +185,15 @@ def create_parser() -> argparse.ArgumentParser:
     monitor_parser.add_argument('--headless', action='store_true', default=False, help='Run browser in headless mode (usually False for user monitoring)')
     monitor_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
     monitor_parser.add_argument('--hesitation-threshold', type=float, default=5.0, help='Seconds of inactivity to detect hesitation (default: 5.0)')
+    
+    # Universal monitoring (any app type)
+    universal_parser = subparsers.add_parser('monitor-universal', help='Monitor any application (web, Windows exe, game, mobile)')
+    universal_parser.add_argument('app_type', choices=['web', 'windows', 'game', 'mobile'], help='Application type')
+    universal_parser.add_argument('target', help='URL (web), process name (windows/game), or app ID (mobile)')
+    universal_parser.add_argument('--target-fps', type=float, default=60.0, help='Target FPS for performance monitoring (default: 60.0)')
+    universal_parser.add_argument('--stutter-threshold', type=float, default=33.0, help='Frame time threshold for stutter detection in ms (default: 33.0)')
+    universal_parser.add_argument('--hitch-threshold', type=float, default=100.0, help='Frame time threshold for hitch detection in ms (default: 100.0)')
+    universal_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
     game_parser.add_argument('--iterations', type=int, default=12, 
                             help='Total number of testing iterations (default: 12)')
     game_parser.add_argument('--feedback-ratio', type=int, default=3,
@@ -830,6 +839,8 @@ def main():
         handle_clean_command(args, config)
     elif args.command == 'playwright':
         handle_playwright_command(args, config)
+    elif args.command == 'monitor-universal':
+        handle_universal_monitoring(args, config)
     else:
         print("🚀 Quick Start Guide:")
         print("=" * 30)
@@ -849,6 +860,11 @@ def main():
         print("   ux-tester playwright analyze https://example.com")
         print("   ux-tester playwright test-flow --url https://example.com")
         print("   ux-tester playwright monitor https://example.com  # Watch user & detect problems")
+        print()
+        print("6. Universal monitoring (any app type):")
+        print("   ux-tester monitor-universal web https://example.com")
+        print("   ux-tester monitor-universal windows notepad.exe")
+        print("   ux-tester monitor-universal game game.exe --target-fps 60")
         print()
         print("6. For legacy testing:")
         print("   ux-tester test --before")

@@ -221,6 +221,41 @@ ux-tester playwright monitor https://example.com
 
 See [docs/PLAYWRIGHT_INTEGRATION_GUIDE.md](docs/PLAYWRIGHT_INTEGRATION_GUIDE.md) and [docs/ACTIVE_MONITORING_GUIDE.md](docs/ACTIVE_MONITORING_GUIDE.md) for full documentation.
 
+### Universal Active Monitoring
+
+Monitor **ANY application type** and detect performance issues:
+
+- 🌐 **Web Apps**: Via Playwright
+- 🪟 **Windows Executables**: Native capture  
+- 🎮 **Games**: FPS/stutter/hitch detection
+- 📱 **Mobile Apps**: Device capture
+
+**Detects:**
+- **Hitches**: Severe frame time spikes (>100ms)
+- **Stuttering**: Frame time variance (>33ms)
+- **FPS Drops**: Performance degradation
+- **Errors**: Application issues
+- **User Confusion**: Friction points
+
+```python
+from src.integration.universal_active_monitor import UniversalActiveMonitor, ApplicationType
+
+# Monitor game with FPS tracking
+monitor = UniversalActiveMonitor(api_key, ApplicationType.GAME)
+monitor.target_fps = 60.0
+monitor.stutter_threshold_ms = 16.67  # 60fps = 16.67ms per frame
+await monitor.start_monitoring("game.exe")
+```
+
+```bash
+# CLI usage
+ux-tester monitor-universal game game.exe --target-fps 60
+ux-tester monitor-universal windows notepad.exe
+ux-tester monitor-universal web https://example.com
+```
+
+See [docs/UNIVERSAL_MONITORING_GUIDE.md](docs/UNIVERSAL_MONITORING_GUIDE.md) for full documentation.
+
 ## Contributing
 
 UX-MIRROR thrives on the same feedback loops it creates. Contributions that enhance the self-programming capabilities, improve cross-platform compatibility, or extend the metrics intelligence are especially welcome.
