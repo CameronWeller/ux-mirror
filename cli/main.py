@@ -162,6 +162,29 @@ def create_parser() -> argparse.ArgumentParser:
     
     # Game testing command
     game_parser = subparsers.add_parser('game', help='Game UX testing with 3:1 feedback cycles')
+    
+    # Playwright web UX analysis
+    playwright_parser = subparsers.add_parser('playwright', help='Web UX analysis using Playwright + AI')
+    playwright_subparsers = playwright_parser.add_subparsers(dest='playwright_action', help='Playwright actions')
+    
+    analyze_web_parser = playwright_subparsers.add_parser('analyze', help='Analyze a web page with AI')
+    analyze_web_parser.add_argument('url', help='URL to analyze')
+    analyze_web_parser.add_argument('--context', help='Additional context for analysis')
+    analyze_web_parser.add_argument('--wait-for', help='CSS selector to wait for before screenshot')
+    analyze_web_parser.add_argument('--headless', action='store_true', default=True, help='Run browser in headless mode')
+    analyze_web_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
+    
+    test_flow_parser = playwright_subparsers.add_parser('test-flow', help='Run interactive UX test flow')
+    test_flow_parser.add_argument('--url', required=True, help='Starting URL')
+    test_flow_parser.add_argument('--steps', help='JSON file with test steps')
+    test_flow_parser.add_argument('--headless', action='store_true', default=False, help='Run browser in headless mode')
+    test_flow_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
+    
+    monitor_parser = playwright_subparsers.add_parser('monitor', help='Watch user actively use website and detect problems')
+    monitor_parser.add_argument('url', help='URL to monitor')
+    monitor_parser.add_argument('--headless', action='store_true', default=False, help='Run browser in headless mode (usually False for user monitoring)')
+    monitor_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
+    monitor_parser.add_argument('--hesitation-threshold', type=float, default=5.0, help='Seconds of inactivity to detect hesitation (default: 5.0)')
     game_parser.add_argument('--iterations', type=int, default=12, 
                             help='Total number of testing iterations (default: 12)')
     game_parser.add_argument('--feedback-ratio', type=int, default=3,
@@ -521,6 +544,248 @@ def handle_game_command(args, config):
         traceback.print_exc()
 
 
+def handle_playwright_command(args, config):
+    """Handle Playwright web UX analysis commands."""
+    import asyncio
+    import os
+    import sys
+    import json
+    from pathlib import Path
+    
+    # Add src to path
+    src_path = str(Path(__file__).parent.parent / "src")
+    if src_path not in sys.path:
+        sys.path.insert(0, src_path)
+    
+    try:
+        from integration.playwright_adapter import PlaywrightUXMirrorAdapter, PLAYWRIGHT_AVAILABLE
+    except ImportError:
+        print("❌ Playwright adapter not available. Install with: pip install playwright")
+        return
+    
+    if not PLAYWRIGHT_AVAILABLE:
+        print("❌ Playwright not installed. Install with: pip install playwright && playwright install chromium")
+        return
+    
+    # Get API key
+    api_key = (
+        config.get('openai_api_key') or 
+        config.get('anthropic_api_key') or
+        os.getenv('OPENAI_API_KEY') or 
+        os.getenv('ANTHROPIC_API_KEY')
+    )
+    
+    if not api_key:
+        print("❌ No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY")
+        return
+    
+    provider = args.provider if hasattr(args, 'provider') else 'openai'
+    
+    if args.playwright_action == 'analyze':
+        asyncio.run(_handle_playwright_analyze(args, api_key, provider))
+    elif args.playwright_action == 'test-flow':
+        asyncio.run(_handle_playwright_test_flow(args, api_key, provider))
+    elif args.playwright_action == 'monitor':
+        asyncio.run(_handle_playwright_monitor(args, api_key, provider))
+    else:
+        print("Use 'analyze', 'test-flow', or 'monitor' with the playwright command")
+
+
+async def _handle_playwright_analyze(args, api_key, provider):
+    """Handle Playwright analyze command."""
+    from integration.playwright_adapter import PlaywrightUXMirrorAdapter
+    
+    adapter = PlaywrightUXMirrorAdapter(api_key, provider=provider)
+    
+    try:
+        print(f"🌐 Analyzing {args.url}...")
+        await adapter.start(headless=args.headless)
+        
+        results = await adapter.navigate_and_analyze(
+            url=args.url,
+            wait_for=getattr(args, 'wait_for', None),
+            context=getattr(args, 'context', None)
+        )
+        
+        print("\n" + "=" * 60)
+        print("📊 UX Analysis Results")
+        print("=" * 60)
+        print(f"\n✅ Screenshot captured: {results['screenshot_size']}")
+        print(f"\n📝 Summary:")
+        print(results["feedback"]["summary"])
+        
+        if results["feedback"].get("priority_fixes"):
+            print(f"\n🎯 Top Issues:")
+            for issue in results["feedback"]["priority_fixes"][:5]:
+                print(f"  • {issue.get('description', 'Unknown')} ({issue.get('severity', 'unknown')})")
+        
+        if results["feedback"].get("recommendations"):
+            print(f"\n💡 Recommendations:")
+            for rec in results["feedback"]["recommendations"][:5]:
+                print(f"  • {rec}")
+        
+        if results["feedback"].get("code_suggestions"):
+            print(f"\n💻 Code Suggestions:")
+            for suggestion in results["feedback"]["code_suggestions"][:3]:
+                print(f"  {suggestion}")
+        
+        print("\n" + "=" * 60)
+        
+    except Exception as e:
+        print(f"❌ Error during analysis: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        await adapter.stop()
+
+
+async def _handle_playwright_monitor(args, api_key, provider):
+    """Handle Playwright active monitoring command."""
+    from src.integration.playwright_active_monitor import PlaywrightActiveMonitor, ProblemDetected
+    
+    monitor = PlaywrightActiveMonitor(api_key, provider=provider)
+    
+    # Configure hesitation threshold
+    if hasattr(args, 'hesitation_threshold'):
+        monitor.hesitation_threshold = args.hesitation_threshold
+    
+    # Set up problem callback
+    def print_problem(problem: ProblemDetected):
+        print("\n" + "=" * 60)
+        print(f"⚠️  PROBLEM DETECTED - {problem.severity.upper()}")
+        print("=" * 60)
+        print(f"Category: {problem.category}")
+        print(f"Description: {problem.description}")
+        if problem.user_action:
+            print(f"User Action: {problem.user_action.event_type} on {problem.user_action.target}")
+        print("=" * 60)
+    
+    monitor.on_problem_detected = print_problem
+    
+    try:
+        print("=" * 60)
+        print("Active User Monitoring - UX-Mirror")
+        print("=" * 60)
+        print("\nWatching for:")
+        print("  • Problems you encounter")
+        print("  • Unexpected behavior")
+        print("  • Confusion points (hesitation)")
+        print("  • Performance issues")
+        print("  • Errors and broken states")
+        print("\n💡 Use the browser window to interact with the site")
+        print("📊 Problems will be detected and reported in real-time")
+        print("Press Ctrl+C to stop monitoring\n")
+        
+        await monitor.start_monitoring(args.url, headless=args.headless)
+        
+        # Keep monitoring until interrupted
+        try:
+            import signal
+            
+            def signal_handler(sig, frame):
+                print("\n\n⏹️  Stopping monitoring...")
+                asyncio.create_task(monitor.stop_monitoring())
+            
+            signal.signal(signal.SIGINT, signal_handler)
+            
+            while monitor.monitoring:
+                await asyncio.sleep(1)
+                
+                # Print summary every 10 seconds
+                if len(monitor.problems_detected) > 0 and len(monitor.problems_detected) % 5 == 0:
+                    summary = monitor.get_summary()
+                    print(f"\n📈 Session: {summary['total_interactions']} interactions, "
+                          f"{summary['problems_detected']} problems detected")
+        
+        except KeyboardInterrupt:
+            print("\n\n⏹️  Stopping monitoring...")
+        
+    except Exception as e:
+        print(f"❌ Error during monitoring: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        await monitor.stop_monitoring()
+        
+        # Print final summary
+        summary = monitor.get_summary()
+        print("\n" + "=" * 60)
+        print("📊 Final Session Summary")
+        print("=" * 60)
+        print(f"Total Interactions: {summary['total_interactions']}")
+        print(f"Problems Detected: {summary['problems_detected']}")
+        print(f"\nBy Severity:")
+        for severity, count in summary['problems_by_severity'].items():
+            if count > 0:
+                print(f"  {severity}: {count}")
+        print(f"\nBy Category:")
+        for category, count in summary['problems_by_category'].items():
+            if count > 0:
+                print(f"  {category}: {count}")
+        
+        if summary['recent_problems']:
+            print(f"\n🔍 Recent Problems:")
+            for problem in summary['recent_problems'][-5:]:
+                print(f"  • [{problem['severity']}] {problem['description']}")
+        
+        print("=" * 60)
+
+
+async def _handle_playwright_test_flow(args, api_key, provider):
+    """Handle Playwright test flow command."""
+    from integration.playwright_adapter import PlaywrightUXMirrorAdapter
+    from integration.utils import load_test_steps
+    
+    adapter = PlaywrightUXMirrorAdapter(api_key, provider=provider)
+    
+    try:
+        print(f"🧪 Running UX test flow on {args.url}...")
+        await adapter.start(headless=args.headless)
+        
+        # Load test steps
+        test_steps = []
+        if hasattr(args, 'steps') and args.steps:
+            test_steps = load_test_steps(args.steps)
+        else:
+            # Default test steps
+            test_steps = [
+                {
+                    "type": "navigate",
+                    "url": args.url,
+                    "description": "Navigate to page"
+                }
+            ]
+        
+        results = await adapter.run_ux_test_flow(test_steps, analyze_after_each=True)
+        
+        print("\n" + "=" * 60)
+        print("🧪 UX Test Flow Results")
+        print("=" * 60)
+        
+        for step in results["steps"]:
+            print(f"\n📝 Step {step['step_number']}: {step.get('description', 'Unknown')}")
+            if step.get('success'):
+                print("  ✅ Success")
+                if "feedback" in step:
+                    print(f"  {step['feedback']['summary'][:100]}...")
+            else:
+                print(f"  ❌ Failed: {step.get('error', 'Unknown error')}")
+        
+        if results.get("recommendations"):
+            print(f"\n🎯 Overall Recommendations:")
+            for rec in results["recommendations"][:5]:
+                print(f"  • {rec}")
+        
+        print("\n" + "=" * 60)
+        
+    except Exception as e:
+        print(f"❌ Error during test flow: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        await adapter.stop()
+
+
 def print_welcome():
     """Print welcome message with system info."""
     print("🎯 UX-MIRROR: Self-Programming GPU-Driven UX Intelligence System")
@@ -563,6 +828,8 @@ def main():
         handle_list_command(args, config)
     elif args.command == 'clean':
         handle_clean_command(args, config)
+    elif args.command == 'playwright':
+        handle_playwright_command(args, config)
     else:
         print("🚀 Quick Start Guide:")
         print("=" * 30)
@@ -578,7 +845,12 @@ def main():
         print("4. View UX insights:")
         print("   ux-tester insights")
         print()
-        print("5. For legacy testing:")
+        print("5. Web UX analysis with Playwright:")
+        print("   ux-tester playwright analyze https://example.com")
+        print("   ux-tester playwright test-flow --url https://example.com")
+        print("   ux-tester playwright monitor https://example.com  # Watch user & detect problems")
+        print()
+        print("6. For legacy testing:")
         print("   ux-tester test --before")
         print("   # perform interaction")
         print("   ux-tester test --after")

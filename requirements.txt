@@ -55,6 +55,7 @@ alembic>=1.12.0  # Database migrations
 
 # Accessibility and Web Integration
 selenium>=4.15.0  # Web automation for metrics collection
+playwright>=1.40.0  # Modern web automation and testing (build on top of this)
 beautifulsoup4>=4.12.0  # HTML parsing
 requests>=2.31.0
 httpx>=0.25.0  # Async HTTP client

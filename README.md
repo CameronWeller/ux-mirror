@@ -172,6 +172,55 @@ python agents/core_orchestrator.py
 npm run start:metrics-collection
 ```
 
+### Playwright Integration
+
+UX-Mirror integrates with Playwright for web automation, building **on top of** Playwright rather than duplicating its features.
+
+**What Playwright provides:**
+- Web navigation and interaction
+- Screenshot capture
+- Element selection and waiting
+
+**What UX-Mirror adds:**
+- AI vision analysis of screenshots
+- UX metrics and feedback
+- Developer-friendly recommendations
+- **Active user monitoring** - Watch users interact and detect problems in real-time
+
+**Quick Examples:**
+
+```python
+# Analyze a page
+from src.integration.playwright_adapter import PlaywrightUXMirrorAdapter
+
+adapter = PlaywrightUXMirrorAdapter(api_key="your-key")
+await adapter.start()
+results = await adapter.navigate_and_analyze("https://example.com")
+print(results["feedback"]["summary"])
+await adapter.stop()
+```
+
+```python
+# Monitor active user and detect problems
+from src.integration.playwright_active_monitor import PlaywrightActiveMonitor
+
+monitor = PlaywrightActiveMonitor(api_key="your-key")
+monitor.on_problem_detected = lambda p: print(f"Problem: {p.description}")
+await monitor.start_monitoring("https://example.com", headless=False)
+# User interacts, problems detected automatically
+```
+
+**CLI Usage:**
+```bash
+# Analyze a page
+ux-tester playwright analyze https://example.com
+
+# Watch user interact and detect problems
+ux-tester playwright monitor https://example.com
+```
+
+See [docs/PLAYWRIGHT_INTEGRATION_GUIDE.md](docs/PLAYWRIGHT_INTEGRATION_GUIDE.md) and [docs/ACTIVE_MONITORING_GUIDE.md](docs/ACTIVE_MONITORING_GUIDE.md) for full documentation.
+
 ## Contributing
 
 UX-MIRROR thrives on the same feedback loops it creates. Contributions that enhance the self-programming capabilities, improve cross-platform compatibility, or extend the metrics intelligence are especially welcome.
