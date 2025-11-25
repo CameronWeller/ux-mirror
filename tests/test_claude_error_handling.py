@@ -37,13 +37,8 @@ class TestInvalidAPIKeyHandling:
             print("[SKIP] Required dependencies not available")
             return False
         
-        # Skip patching if aiohttp not available
-        try:
-            from unittest.mock import patch
-            return await self._test_invalid_api_key_401_impl()
-        except ImportError:
-            print("[SKIP] unittest.mock not available")
-            return False
+        # Note: patch is already imported at module level
+        return await self._test_invalid_api_key_401_impl()
     
     @patch('aiohttp.ClientSession')
     async def _test_invalid_api_key_401_impl(self, mock_session):
@@ -117,12 +112,8 @@ class TestInvalidAPIKeyHandling:
             print("[SKIP] Required dependencies not available")
             return False
         
-        try:
-            from unittest.mock import patch
-            return await self._test_empty_api_key_impl()
-        except ImportError:
-            print("[SKIP] unittest.mock not available")
-            return False
+        # Note: patch is already imported at module level
+        return await self._test_empty_api_key_impl()
     
     @patch('aiohttp.ClientSession')
     async def _test_empty_api_key_impl(self, mock_session):
@@ -155,12 +146,8 @@ class TestInvalidAPIKeyHandling:
             print("[SKIP] Required dependencies not available")
             return False
         
-        try:
-            from unittest.mock import patch
-            return await self._test_none_api_key_impl()
-        except ImportError:
-            print("[SKIP] unittest.mock not available")
-            return False
+        # Note: patch is already imported at module level
+        return await self._test_none_api_key_impl()
     
     @patch('aiohttp.ClientSession')
     async def _test_none_api_key_impl(self, mock_session):
@@ -205,12 +192,8 @@ class TestTimeoutHandling:
             print("[SKIP] Required dependencies not available")
             return False
         
-        try:
-            from unittest.mock import patch
-            return await self._test_timeout_error_handling_impl()
-        except ImportError:
-            print("[SKIP] unittest.mock not available")
-            return False
+        # Note: patch is already imported at module level
+        return await self._test_timeout_error_handling_impl()
     
     @patch('aiohttp.ClientSession')
     async def _test_timeout_error_handling_impl(self, mock_session):
@@ -267,12 +250,8 @@ class TestRateLimitingHandling:
             print("[SKIP] Required dependencies not available")
             return False
         
-        try:
-            from unittest.mock import patch
-            return await self._test_rate_limit_429_impl()
-        except ImportError:
-            print("[SKIP] unittest.mock not available")
-            return False
+        # Note: patch is already imported at module level
+        return await self._test_rate_limit_429_impl()
     
     @patch('aiohttp.ClientSession')
     async def _test_rate_limit_429_impl(self, mock_session):
