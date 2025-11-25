@@ -48,6 +48,7 @@ class UIElement:
     bbox: Tuple[int, int, int, int]  # (x, y, width, height)
     confidence: float
     text_content: Optional[str] = None
+    text_confidence: Optional[float] = None  # OCR confidence for extracted text
     color_analysis: Optional[Dict[str, Any]] = None
     accessibility_score: float = 0.0
     is_interactive: bool = False
@@ -57,18 +58,27 @@ class UIElementDetector:
     """
     Detects and classifies UI elements in screenshots using both
     traditional computer vision and optional GPU-accelerated deep learning.
+    Now includes OCR for text extraction from detected elements.
     """
     
-    def __init__(self, use_gpu: bool = True, confidence_threshold: float = 0.3):
+    def __init__(self, 
+                 use_gpu: bool = False,  # v0.1.0: GPU disabled by default 
+                 confidence_threshold: float = 0.3,
+                 enable_ocr: bool = True,
+                 ocr_language: str = "eng"):
         """
         Initialize the UI Element Detector
         
         Args:
             use_gpu: Whether to use GPU acceleration if available
             confidence_threshold: Minimum confidence score for detections
+            enable_ocr: Enable OCR for text extraction from detected elements
+            ocr_language: Language code for OCR (e.g., 'eng', 'eng+spa')
         """
         self.confidence_threshold = confidence_threshold
-        self.use_gpu = use_gpu and TORCH_AVAILABLE and torch.cuda.is_available()
+        # v0.1.0: GPU disabled for MVP
+        self.use_gpu = False  # Disable GPU for v0.1.0 MVP
+        self.enable_ocr = enable_ocr
         
         if self.use_gpu:
             self.device = torch.device("cuda")
@@ -80,6 +90,17 @@ class UIElementDetector:
             self.model = None
             self.transform = None
             logger.info("UI Element Detector initialized with OpenCV fallback")
+        
+        # Initialize OCR engine if enabled
+        self.ocr_engine = None
+        if self.enable_ocr:
+            try:
+                from .ocr_engine import get_ocr_engine
+                self.ocr_engine = get_ocr_engine(language=ocr_language, preprocessing=True)
+                logger.info(f"OCR engine initialized (language: {ocr_language})")
+            except Exception as e:
+                logger.warning(f"OCR engine not available: {e}. Text extraction will be disabled.")
+                self.enable_ocr = False
         
         # Initialize traditional CV detectors
         self._init_opencv_detectors()
@@ -94,10 +115,10 @@ class UIElementDetector:
         Returns:
             List of detected UI elements
         """
-        if self.use_gpu and self.model is not None:
-            return self._gpu_detect_elements(image)
-        else:
-            return self._opencv_detect_elements(image)
+        # v0.1.0: GPU detection disabled - always use OpenCV
+        # if self.use_gpu and self.model is not None:
+        #     return self._gpu_detect_elements(image)
+        return self._opencv_detect_elements(image)
     
     def _gpu_detect_elements(self, image: np.ndarray) -> List[UIElement]:
         """GPU-accelerated UI element detection"""
@@ -118,6 +139,10 @@ class UIElementDetector:
             
             # Remove duplicates and filter by confidence
             elements = self._filter_and_deduplicate(elements)
+            
+            # Extract text from elements if OCR is enabled
+            if self.enable_ocr and self.ocr_engine:
+                elements = self._extract_text_from_elements(elements, image)
             
             logger.debug(f"GPU detection found {len(elements)} UI elements")
             return elements
@@ -472,6 +497,46 @@ class UIElementDetector:
         
         return enhanced
     
+    def _extract_text_from_elements(self, elements: List[UIElement], image: np.ndarray) -> List[UIElement]:
+        """
+        Extract text from detected UI elements using OCR.
+        
+        Args:
+            elements: List of detected UI elements
+            image: Full image
+            
+        Returns:
+            Elements with text_content and text_confidence populated
+        """
+        if not self.ocr_engine:
+            return elements
+        
+        enhanced = []
+        
+        for elem in elements:
+            # Only extract text from elements that might contain text
+            if elem.element_type in [UIElementType.TEXT, UIElementType.BUTTON, 
+                                     UIElementType.INPUT, UIElementType.LINK]:
+                try:
+                    # Extract region
+                    x, y, w, h = elem.bbox
+                    
+                    # Ensure region is valid
+                    if w > 10 and h > 8:  # Minimum size for OCR
+                        # Extract text using OCR
+                        ocr_result = self.ocr_engine.extract_text(image, elem.bbox)
+                        
+                        if ocr_result.text and ocr_result.confidence >= 0.5:
+                            elem.text_content = ocr_result.text
+                            elem.text_confidence = ocr_result.confidence
+                            logger.debug(f"Extracted text from {elem.element_type.value}: '{ocr_result.text[:50]}'")
+                except Exception as e:
+                    logger.warning(f"OCR failed for {elem.element_type.value} element: {e}")
+            
+            enhanced.append(elem)
+        
+        return enhanced
+    
     def _init_detection_model(self):
         """Initialize the GPU detection model"""
         if not self.use_gpu:
@@ -542,4 +607,3 @@ def get_ui_detector() -> UIElementDetector:
     global _ui_detector_instance
     if _ui_detector_instance is None:
         _ui_detector_instance = UIElementDetector()
-    return _ui_detector_instance 

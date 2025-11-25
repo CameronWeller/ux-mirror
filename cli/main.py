@@ -3,7 +3,7 @@
 UX-MIRROR Command Line Interface
 ================================
 
-Modern CLI for the UX testing framework with multi-agent support.
+Modern CLI for the UX testing framework.
 """
 import argparse
 import sys
@@ -14,11 +14,11 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-# Add src to path for imports during development
-src_path = str(Path(__file__).parent.parent / "src")
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
+# Try to import from src package (proper package structure)
+try:
+    from src.ux_tester.utils import load_config, validate_config, setup_logging
+except ImportError:
+    # Fallback: try direct import
 try:
     from ux_tester.utils import load_config, validate_config, setup_logging
 except ImportError:
@@ -67,7 +67,7 @@ except ImportError:
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
-        description='UX-MIRROR Testing Framework - Multi-Agent UX Intelligence',
+        description='UX-MIRROR Testing Framework - Unified UX Intelligence',
         epilog='Use "ux-tester <command> --help" for more info on specific commands.'
     )
     
@@ -94,106 +94,10 @@ def create_parser() -> argparse.ArgumentParser:
     test_parser.add_argument('--expect', type=str, help='Expected content description')
     test_parser.add_argument('--analyze', action='store_true', help='Analyze screenshots')
 
-    # Agent management commands
-    agent_parser = subparsers.add_parser('agent', help='Agent management')
-    agent_subparsers = agent_parser.add_subparsers(dest='agent_action', help='Agent actions')
     
-    # Start agents
-    start_parser = agent_subparsers.add_parser('start', help='Start agents')
-    start_parser.add_argument('agent_type', choices=['orchestrator', 'visual', 'metrics', 'all'], 
-                             help='Type of agent to start')
-    start_parser.add_argument('--host', default='localhost', help='Host to bind/connect to')
-    start_parser.add_argument('--port', type=int, default=8765, help='Port to use')
-    start_parser.add_argument('--auto-monitor', action='store_true', 
-                             help='Start with automatic monitoring enabled')
-    start_parser.add_argument('--gpu', action='store_true', help='Enable GPU acceleration')
-    
-    # Stop agents
-    stop_parser = agent_subparsers.add_parser('stop', help='Stop agents')
-    stop_parser.add_argument('agent_type', choices=['orchestrator', 'visual', 'metrics', 'all'], 
-                            help='Type of agent to stop')
-    
-    # Agent status
-    status_parser = agent_subparsers.add_parser('status', help='Show agent status')
-    status_parser.add_argument('--orchestrator-host', default='localhost', 
-                              help='Orchestrator host')
-    status_parser.add_argument('--orchestrator-port', type=int, default=8765, 
-                              help='Orchestrator port')
-    
-    # Monitor command
-    monitor_parser = subparsers.add_parser('monitor', help='Real-time monitoring')
-    monitor_subparsers = monitor_parser.add_subparsers(dest='monitor_action', help='Monitor actions')
-    
-    # Start monitoring
-    start_monitor_parser = monitor_subparsers.add_parser('start', help='Start real-time monitoring')
-    start_monitor_parser.add_argument('--interval', type=float, default=5.0, 
-                                     help='Monitoring interval in seconds')
-    start_monitor_parser.add_argument('--targets', nargs='+', 
-                                     help='Specific targets to monitor')
-    start_monitor_parser.add_argument('--orchestrator-host', default='localhost')
-    start_monitor_parser.add_argument('--orchestrator-port', type=int, default=8765)
-    
-    # Stop monitoring
-    stop_monitor_parser = monitor_subparsers.add_parser('stop', help='Stop real-time monitoring')
-    stop_monitor_parser.add_argument('--orchestrator-host', default='localhost')
-    stop_monitor_parser.add_argument('--orchestrator-port', type=int, default=8765)
-    
-    # Show monitoring status
-    monitor_status_parser = monitor_subparsers.add_parser('status', help='Show monitoring status')
-    monitor_status_parser.add_argument('--orchestrator-host', default='localhost')
-    monitor_status_parser.add_argument('--orchestrator-port', type=int, default=8765)
-    
-    # Insights command
-    insights_parser = subparsers.add_parser('insights', help='View UX insights')
-    insights_parser.add_argument('--limit', type=int, default=20, 
-                                help='Number of recent insights to show')
-    insights_parser.add_argument('--severity', choices=['low', 'medium', 'high', 'critical'],
-                                help='Filter by severity level')
-    insights_parser.add_argument('--type', choices=['performance', 'usability', 'accessibility', 'engagement'],
-                                help='Filter by insight type')
-    insights_parser.add_argument('--orchestrator-host', default='localhost')
-    insights_parser.add_argument('--orchestrator-port', type=int, default=8765)
-    
-    # Dashboard command
-    dashboard_parser = subparsers.add_parser('dashboard', help='Launch web dashboard')
-    dashboard_parser.add_argument('--port', type=int, default=3000, help='Dashboard port')
-    dashboard_parser.add_argument('--orchestrator-host', default='localhost')
-    dashboard_parser.add_argument('--orchestrator-port', type=int, default=8765)
     
     # Game testing command
     game_parser = subparsers.add_parser('game', help='Game UX testing with 3:1 feedback cycles')
-    
-    # Playwright web UX analysis
-    playwright_parser = subparsers.add_parser('playwright', help='Web UX analysis using Playwright + AI')
-    playwright_subparsers = playwright_parser.add_subparsers(dest='playwright_action', help='Playwright actions')
-    
-    analyze_web_parser = playwright_subparsers.add_parser('analyze', help='Analyze a web page with AI')
-    analyze_web_parser.add_argument('url', help='URL to analyze')
-    analyze_web_parser.add_argument('--context', help='Additional context for analysis')
-    analyze_web_parser.add_argument('--wait-for', help='CSS selector to wait for before screenshot')
-    analyze_web_parser.add_argument('--headless', action='store_true', default=True, help='Run browser in headless mode')
-    analyze_web_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
-    
-    test_flow_parser = playwright_subparsers.add_parser('test-flow', help='Run interactive UX test flow')
-    test_flow_parser.add_argument('--url', required=True, help='Starting URL')
-    test_flow_parser.add_argument('--steps', help='JSON file with test steps')
-    test_flow_parser.add_argument('--headless', action='store_true', default=False, help='Run browser in headless mode')
-    test_flow_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
-    
-    monitor_parser = playwright_subparsers.add_parser('monitor', help='Watch user actively use website and detect problems')
-    monitor_parser.add_argument('url', help='URL to monitor')
-    monitor_parser.add_argument('--headless', action='store_true', default=False, help='Run browser in headless mode (usually False for user monitoring)')
-    monitor_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
-    monitor_parser.add_argument('--hesitation-threshold', type=float, default=5.0, help='Seconds of inactivity to detect hesitation (default: 5.0)')
-    
-    # Universal monitoring (any app type)
-    universal_parser = subparsers.add_parser('monitor-universal', help='Monitor any application (web, Windows exe, game, mobile)')
-    universal_parser.add_argument('app_type', choices=['web', 'windows', 'game', 'mobile'], help='Application type')
-    universal_parser.add_argument('target', help='URL (web), process name (windows/game), or app ID (mobile)')
-    universal_parser.add_argument('--target-fps', type=float, default=60.0, help='Target FPS for performance monitoring (default: 60.0)')
-    universal_parser.add_argument('--stutter-threshold', type=float, default=33.0, help='Frame time threshold for stutter detection in ms (default: 33.0)')
-    universal_parser.add_argument('--hitch-threshold', type=float, default=100.0, help='Frame time threshold for hitch detection in ms (default: 100.0)')
-    universal_parser.add_argument('--provider', choices=['openai', 'anthropic'], default='openai', help='AI provider')
     game_parser.add_argument('--iterations', type=int, default=12, 
                             help='Total number of testing iterations (default: 12)')
     game_parser.add_argument('--feedback-ratio', type=int, default=3,
@@ -238,219 +142,6 @@ def handle_test_command(args, config):
         print("Use --before, --after, or --analyze with the test command")
 
 
-def handle_agent_command(args, config):
-    """Handle agent management commands."""
-    if args.agent_action == 'start':
-        handle_start_agent(args, config)
-    elif args.agent_action == 'stop':
-        handle_stop_agent(args, config)
-    elif args.agent_action == 'status':
-        handle_agent_status(args, config)
-    else:
-        print("Use 'start', 'stop', or 'status' with the agent command")
-
-
-def handle_start_agent(args, config):
-    """Start specified agents."""
-    print(f"🚀 Starting {args.agent_type} agent(s)...")
-    
-    if args.agent_type == 'orchestrator' or args.agent_type == 'all':
-        start_orchestrator(args)
-    
-    if args.agent_type == 'visual' or args.agent_type == 'all':
-        start_visual_agent(args)
-    
-    if args.agent_type == 'metrics' or args.agent_type == 'all':
-        start_metrics_agent(args)
-
-
-def start_orchestrator(args):
-    """Start the core orchestrator."""
-    cmd = ['python', 'agents/core_orchestrator.py', 
-           '--host', args.host, '--port', str(args.port)]
-    
-    if args.auto_monitor:
-        cmd.append('--auto-insights')
-    
-    print(f"Starting Core Orchestrator on {args.host}:{args.port}")
-    subprocess.Popen(cmd)
-
-
-def start_visual_agent(args):
-    """Start the visual analysis agent."""
-    cmd = ['python', 'agents/visual_analysis_agent.py',
-           '--orchestrator-host', args.host, 
-           '--orchestrator-port', str(args.port)]
-    
-    if args.auto_monitor:
-        cmd.extend(['--auto-monitor', '--monitor-interval', '5.0'])
-    
-    print(f"Starting Visual Analysis Agent (connecting to {args.host}:{args.port})")
-    subprocess.Popen(cmd)
-
-
-def start_metrics_agent(args):
-    """Start the metrics intelligence agent."""
-    cmd = ['python', 'agents/metrics_intelligence.py',
-           '--orchestrator-host', args.host,
-           '--orchestrator-port', str(args.port)]
-    
-    print(f"Starting Metrics Intelligence Agent (connecting to {args.host}:{args.port})")
-    subprocess.Popen(cmd)
-
-
-def handle_stop_agent(args, config):
-    """Stop specified agents."""
-    print(f"🛑 Stopping {args.agent_type} agent(s)...")
-    
-    # Use secure subprocess.run instead of vulnerable os.system
-    import subprocess
-    import signal
-    
-    def safe_pkill(process_name):
-        """Safely kill processes by name using subprocess."""
-        try:
-            result = subprocess.run(
-                ['pkill', '-f', process_name], 
-                check=False, 
-                timeout=30,
-                capture_output=True,
-                text=True
-            )
-            if result.returncode == 0:
-                print(f"✅ Successfully stopped processes matching: {process_name}")
-            elif result.returncode == 1:
-                print(f"⚠️  No processes found matching: {process_name}")
-            else:
-                print(f"❌ Error stopping processes: {result.stderr}")
-        except subprocess.TimeoutExpired:
-            print(f"⏰ Timeout while stopping processes matching: {process_name}")
-        except FileNotFoundError:
-            print("❌ 'pkill' command not found. Unable to stop processes.")
-        except Exception as e:
-            print(f"❌ Unexpected error stopping processes: {e}")
-    
-    if args.agent_type == 'all':
-        safe_pkill('core_orchestrator.py')
-        safe_pkill('visual_analysis_agent.py')
-        safe_pkill('metrics_intelligence.py')
-    elif args.agent_type == 'orchestrator':
-        safe_pkill('core_orchestrator.py')
-    elif args.agent_type == 'visual':
-        safe_pkill('visual_analysis_agent.py')
-    elif args.agent_type == 'metrics':
-        safe_pkill('metrics_intelligence.py')
-
-
-def handle_agent_status(args, config):
-    """Show agent status via orchestrator API."""
-    try:
-        # For demonstration, we'll create a simple status check
-        # In production, this would query the orchestrator's REST API
-        print("📊 Agent Status:")
-        print("=" * 50)
-        print("Core Orchestrator: ❓ (checking...)")
-        print("Visual Analysis Agent: ❓ (checking...)")
-        print("Metrics Intelligence Agent: ❓ (checking...)")
-        print()
-        print("💡 Use 'ux-tester monitor status' for detailed real-time status")
-        
-    except Exception as e:
-        print(f"❌ Error checking agent status: {e}")
-
-
-def handle_monitor_command(args, config):
-    """Handle monitoring commands."""
-    if args.monitor_action == 'start':
-        handle_start_monitoring(args, config)
-    elif args.monitor_action == 'stop':
-        handle_stop_monitoring(args, config)
-    elif args.monitor_action == 'status':
-        handle_monitor_status(args, config)
-    else:
-        print("Use 'start', 'stop', or 'status' with the monitor command")
-
-
-def handle_start_monitoring(args, config):
-    """Start real-time monitoring."""
-    print("🔍 Starting real-time monitoring...")
-    print(f"   Interval: {args.interval}s")
-    if args.targets:
-        print(f"   Targets: {', '.join(args.targets)}")
-    print(f"   Orchestrator: {args.orchestrator_host}:{args.orchestrator_port}")
-    
-    # In production, this would send a command to the orchestrator
-    print("✅ Monitoring started (simulated)")
-    print("💡 Use 'ux-tester insights' to view collected insights")
-
-
-def handle_stop_monitoring(args, config):
-    """Stop real-time monitoring."""
-    print("⏹️  Stopping real-time monitoring...")
-    print("✅ Monitoring stopped (simulated)")
-
-
-def handle_monitor_status(args, config):
-    """Show monitoring status."""
-    print("📈 Monitoring Status:")
-    print("=" * 50)
-    print("🔍 Real-time monitoring: ⚪ Inactive")
-    print("🎯 Monitoring targets: None")
-    print("📊 Insights generated: 0")
-    print("🏥 System health: 🟢 Good")
-    print()
-    print("💡 Use 'ux-tester monitor start' to begin monitoring")
-
-
-def handle_insights_command(args, config):
-    """Handle insights viewing."""
-    print(f"🧠 Recent UX Insights (limit: {args.limit}):")
-    print("=" * 60)
-    
-    # Mock insights for demonstration
-    insights = [
-        {
-            "timestamp": datetime.now().isoformat(),
-            "type": "usability",
-            "severity": "medium",
-            "description": "Low contrast detected in button elements",
-            "recommendations": ["Increase contrast ratio", "Review color scheme"]
-        },
-        {
-            "timestamp": datetime.now().isoformat(),
-            "type": "performance",
-            "severity": "high",
-            "description": "Response time exceeded threshold (750ms)",
-            "recommendations": ["Optimize resource loading", "Review database queries"]
-        }
-    ]
-    
-    for i, insight in enumerate(insights, 1):
-        severity_icons = {
-            'low': '🟢',
-            'medium': '🟡', 
-            'high': '🟠',
-            'critical': '🔴'
-        }
-        
-        icon = severity_icons.get(insight['severity'], '⚪')
-        print(f"{i}. {icon} [{insight['type'].upper()}] {insight['description']}")
-        print(f"   Severity: {insight['severity']}")
-        print(f"   Recommendations: {', '.join(insight['recommendations'])}")
-        print()
-    
-    print("💡 Use 'ux-tester agent start all' to begin collecting real insights")
-
-
-def handle_dashboard_command(args, config):
-    """Launch web dashboard."""
-    print(f"🌐 Launching UX-MIRROR Dashboard on port {args.port}...")
-    print(f"   Dashboard URL: http://localhost:{args.port}")
-    print(f"   Orchestrator: {args.orchestrator_host}:{args.orchestrator_port}")
-    
-    # In production, this would start a web server
-    print("⚠️  Dashboard not yet implemented")
-    print("💡 Use 'ux-tester insights' for text-based insights")
 
 
 def handle_config_command(args, config):
@@ -502,14 +193,12 @@ def handle_game_command(args, config):
         import sys
         import os
         
-        # Add the project root to Python path
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        sys.path.insert(0, project_root)
-        
-        # Also add current working directory
-        sys.path.insert(0, os.getcwd())
-        
+        # Import game testing session
+        try:
         from game_testing_session import GameUXTestingController
+        except ImportError:
+            print("Error: Could not import game_testing_session module")
+            return
         
         async def run_game_session():
             controller = GameUXTestingController(config_path=args.config)
@@ -553,253 +242,25 @@ def handle_game_command(args, config):
         traceback.print_exc()
 
 
-def handle_playwright_command(args, config):
-    """Handle Playwright web UX analysis commands."""
-    import asyncio
-    import os
-    import sys
-    import json
-    from pathlib import Path
-    
-    # Add src to path
-    src_path = str(Path(__file__).parent.parent / "src")
-    if src_path not in sys.path:
-        sys.path.insert(0, src_path)
-    
-    try:
-        from integration.playwright_adapter import PlaywrightUXMirrorAdapter, PLAYWRIGHT_AVAILABLE
-    except ImportError:
-        print("❌ Playwright adapter not available. Install with: pip install playwright")
-        return
-    
-    if not PLAYWRIGHT_AVAILABLE:
-        print("❌ Playwright not installed. Install with: pip install playwright && playwright install chromium")
-        return
-    
-    # Get API key
-    api_key = (
-        config.get('openai_api_key') or 
-        config.get('anthropic_api_key') or
-        os.getenv('OPENAI_API_KEY') or 
-        os.getenv('ANTHROPIC_API_KEY')
-    )
-    
-    if not api_key:
-        print("❌ No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY")
-        return
-    
-    provider = args.provider if hasattr(args, 'provider') else 'openai'
-    
-    if args.playwright_action == 'analyze':
-        asyncio.run(_handle_playwright_analyze(args, api_key, provider))
-    elif args.playwright_action == 'test-flow':
-        asyncio.run(_handle_playwright_test_flow(args, api_key, provider))
-    elif args.playwright_action == 'monitor':
-        asyncio.run(_handle_playwright_monitor(args, api_key, provider))
-    else:
-        print("Use 'analyze', 'test-flow', or 'monitor' with the playwright command")
-
-
-async def _handle_playwright_analyze(args, api_key, provider):
-    """Handle Playwright analyze command."""
-    from integration.playwright_adapter import PlaywrightUXMirrorAdapter
-    
-    adapter = PlaywrightUXMirrorAdapter(api_key, provider=provider)
-    
-    try:
-        print(f"🌐 Analyzing {args.url}...")
-        await adapter.start(headless=args.headless)
-        
-        results = await adapter.navigate_and_analyze(
-            url=args.url,
-            wait_for=getattr(args, 'wait_for', None),
-            context=getattr(args, 'context', None)
-        )
-        
-        print("\n" + "=" * 60)
-        print("📊 UX Analysis Results")
+def handle_analyze_command(args, config):
+    """Handle analyze command - analyze a screenshot or running application."""
+    print("📊 UX Analysis")
         print("=" * 60)
-        print(f"\n✅ Screenshot captured: {results['screenshot_size']}")
-        print(f"\n📝 Summary:")
-        print(results["feedback"]["summary"])
-        
-        if results["feedback"].get("priority_fixes"):
-            print(f"\n🎯 Top Issues:")
-            for issue in results["feedback"]["priority_fixes"][:5]:
-                print(f"  • {issue.get('description', 'Unknown')} ({issue.get('severity', 'unknown')})")
-        
-        if results["feedback"].get("recommendations"):
-            print(f"\n💡 Recommendations:")
-            for rec in results["feedback"]["recommendations"][:5]:
-                print(f"  • {rec}")
-        
-        if results["feedback"].get("code_suggestions"):
-            print(f"\n💻 Code Suggestions:")
-            for suggestion in results["feedback"]["code_suggestions"][:3]:
-                print(f"  {suggestion}")
-        
-        print("\n" + "=" * 60)
-        
-    except Exception as e:
-        print(f"❌ Error during analysis: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        await adapter.stop()
-
-
-async def _handle_playwright_monitor(args, api_key, provider):
-    """Handle Playwright active monitoring command."""
-    from src.integration.playwright_active_monitor import PlaywrightActiveMonitor, ProblemDetected
-    
-    monitor = PlaywrightActiveMonitor(api_key, provider=provider)
-    
-    # Configure hesitation threshold
-    if hasattr(args, 'hesitation_threshold'):
-        monitor.hesitation_threshold = args.hesitation_threshold
-    
-    # Set up problem callback
-    def print_problem(problem: ProblemDetected):
-        print("\n" + "=" * 60)
-        print(f"⚠️  PROBLEM DETECTED - {problem.severity.upper()}")
-        print("=" * 60)
-        print(f"Category: {problem.category}")
-        print(f"Description: {problem.description}")
-        if problem.user_action:
-            print(f"User Action: {problem.user_action.event_type} on {problem.user_action.target}")
-        print("=" * 60)
-    
-    monitor.on_problem_detected = print_problem
-    
-    try:
-        print("=" * 60)
-        print("Active User Monitoring - UX-Mirror")
-        print("=" * 60)
-        print("\nWatching for:")
-        print("  • Problems you encounter")
-        print("  • Unexpected behavior")
-        print("  • Confusion points (hesitation)")
-        print("  • Performance issues")
-        print("  • Errors and broken states")
-        print("\n💡 Use the browser window to interact with the site")
-        print("📊 Problems will be detected and reported in real-time")
-        print("Press Ctrl+C to stop monitoring\n")
-        
-        await monitor.start_monitoring(args.url, headless=args.headless)
-        
-        # Keep monitoring until interrupted
-        try:
-            import signal
-            
-            def signal_handler(sig, frame):
-                print("\n\n⏹️  Stopping monitoring...")
-                asyncio.create_task(monitor.stop_monitoring())
-            
-            signal.signal(signal.SIGINT, signal_handler)
-            
-            while monitor.monitoring:
-                await asyncio.sleep(1)
-                
-                # Print summary every 10 seconds
-                if len(monitor.problems_detected) > 0 and len(monitor.problems_detected) % 5 == 0:
-                    summary = monitor.get_summary()
-                    print(f"\n📈 Session: {summary['total_interactions']} interactions, "
-                          f"{summary['problems_detected']} problems detected")
-        
-        except KeyboardInterrupt:
-            print("\n\n⏹️  Stopping monitoring...")
-        
-    except Exception as e:
-        print(f"❌ Error during monitoring: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        await monitor.stop_monitoring()
-        
-        # Print final summary
-        summary = monitor.get_summary()
-        print("\n" + "=" * 60)
-        print("📊 Final Session Summary")
-        print("=" * 60)
-        print(f"Total Interactions: {summary['total_interactions']}")
-        print(f"Problems Detected: {summary['problems_detected']}")
-        print(f"\nBy Severity:")
-        for severity, count in summary['problems_by_severity'].items():
-            if count > 0:
-                print(f"  {severity}: {count}")
-        print(f"\nBy Category:")
-        for category, count in summary['problems_by_category'].items():
-            if count > 0:
-                print(f"  {category}: {count}")
-        
-        if summary['recent_problems']:
-            print(f"\n🔍 Recent Problems:")
-            for problem in summary['recent_problems'][-5:]:
-                print(f"  • [{problem['severity']}] {problem['description']}")
-        
-        print("=" * 60)
-
-
-async def _handle_playwright_test_flow(args, api_key, provider):
-    """Handle Playwright test flow command."""
-    from integration.playwright_adapter import PlaywrightUXMirrorAdapter
-    from integration.utils import load_test_steps
-    
-    adapter = PlaywrightUXMirrorAdapter(api_key, provider=provider)
-    
-    try:
-        print(f"🧪 Running UX test flow on {args.url}...")
-        await adapter.start(headless=args.headless)
-        
-        # Load test steps
-        test_steps = []
-        if hasattr(args, 'steps') and args.steps:
-            test_steps = load_test_steps(args.steps)
-        else:
-            # Default test steps
-            test_steps = [
-                {
-                    "type": "navigate",
-                    "url": args.url,
-                    "description": "Navigate to page"
-                }
-            ]
-        
-        results = await adapter.run_ux_test_flow(test_steps, analyze_after_each=True)
-        
-        print("\n" + "=" * 60)
-        print("🧪 UX Test Flow Results")
-        print("=" * 60)
-        
-        for step in results["steps"]:
-            print(f"\n📝 Step {step['step_number']}: {step.get('description', 'Unknown')}")
-            if step.get('success'):
-                print("  ✅ Success")
-                if "feedback" in step:
-                    print(f"  {step['feedback']['summary'][:100]}...")
-            else:
-                print(f"  ❌ Failed: {step.get('error', 'Unknown error')}")
-        
-        if results.get("recommendations"):
-            print(f"\n🎯 Overall Recommendations:")
-            for rec in results["recommendations"][:5]:
-                print(f"  • {rec}")
-        
-        print("\n" + "=" * 60)
-        
-    except Exception as e:
-        print(f"❌ Error during test flow: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        await adapter.stop()
+    print("Use the GUI launcher for interactive analysis:")
+    print("  python ux_mirror_launcher.py")
+    print()
+    print("Or use the simple tester:")
+    print("  ux-tester test --before")
+    print("  # perform interaction")
+    print("  ux-tester test --after")
+    print("  ux-tester test --analyze")
 
 
 def print_welcome():
     """Print welcome message with system info."""
-    print("🎯 UX-MIRROR: Self-Programming GPU-Driven UX Intelligence System")
-    print("=" * 65)
-    print("✨ Multi-Agent Architecture for Real-Time UX Analysis")
+    print("🎯 UX-MIRROR v0.1.0: AI-Powered UX Analysis")
+    print("=" * 50)
+    print("✨ Simple, focused tool for desktop application UX analysis")
     print()
 
 
@@ -821,14 +282,6 @@ def main():
     # Handle commands
     if args.command == 'test':
         handle_test_command(args, config)
-    elif args.command == 'agent':
-        handle_agent_command(args, config)
-    elif args.command == 'monitor':
-        handle_monitor_command(args, config)
-    elif args.command == 'insights':
-        handle_insights_command(args, config)
-    elif args.command == 'dashboard':
-        handle_dashboard_command(args, config)
     elif args.command == 'game':
         handle_game_command(args, config)
     elif args.command == 'config':
@@ -837,40 +290,26 @@ def main():
         handle_list_command(args, config)
     elif args.command == 'clean':
         handle_clean_command(args, config)
-    elif args.command == 'playwright':
-        handle_playwright_command(args, config)
-    elif args.command == 'monitor-universal':
-        handle_universal_monitoring(args, config)
+    elif args.command == 'analyze':
+        handle_analyze_command(args, config)
     else:
         print("🚀 Quick Start Guide:")
         print("=" * 30)
-        print("1. Game UX Testing (3:1 feedback cycles):")
+        print("1. GUI Launcher (Recommended):")
+        print("   python ux_mirror_launcher.py")
+        print()
+        print("2. Game UX Testing:")
         print("   ux-tester game --iterations 12 --feedback-ratio 3")
         print()
-        print("2. Start the multi-agent system:")
-        print("   ux-tester agent start all")
-        print()
-        print("3. Begin real-time monitoring:")
-        print("   ux-tester monitor start")
-        print()
-        print("4. View UX insights:")
-        print("   ux-tester insights")
-        print()
-        print("5. Web UX analysis with Playwright:")
-        print("   ux-tester playwright analyze https://example.com")
-        print("   ux-tester playwright test-flow --url https://example.com")
-        print("   ux-tester playwright monitor https://example.com  # Watch user & detect problems")
-        print()
-        print("6. Universal monitoring (any app type):")
-        print("   ux-tester monitor-universal web https://example.com")
-        print("   ux-tester monitor-universal windows notepad.exe")
-        print("   ux-tester monitor-universal game game.exe --target-fps 60")
-        print()
-        print("6. For legacy testing:")
+        print("3. Basic Testing:")
         print("   ux-tester test --before")
         print("   # perform interaction")
         print("   ux-tester test --after")
         print("   ux-tester test --analyze")
+        print()
+        print("4. Configuration:")
+        print("   ux-tester config --show")
+        print("   ux-tester config --validate")
         print()
         parser.print_help()
 

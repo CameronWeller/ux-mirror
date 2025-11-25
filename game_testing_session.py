@@ -31,6 +31,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @dataclass
+class VisualAnalysisResult:
+    """Result of visual analysis"""
+    timestamp: datetime
+    change_score: float
+    quality_score: float
+    ui_elements_detected: int
+    response_time: Optional[float]
+    attention_areas: List[Tuple[int, int, int, int]]  # Bounding boxes (x, y, w, h)
+    accessibility_issues: List[str]
+    performance_impact: str
+    recommendations: List[str]
+
+@dataclass
 class GameTestingSession:
     """Game testing session configuration and state"""
     session_id: str

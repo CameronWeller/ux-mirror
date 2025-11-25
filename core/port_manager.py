@@ -2,7 +2,7 @@
 """
 Port Management for UX-MIRROR
 
-Handles port allocation and conflict resolution for the multi-agent system.
+Handles port allocation and conflict resolution for the unified system.
 """
 
 import socket

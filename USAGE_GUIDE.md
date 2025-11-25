@@ -7,16 +7,29 @@ Your UX-MIRROR system has **real AI-powered analysis** that works with C++ games
 ## 🚀 Quick Start
 
 ### 1. Set Your Anthropic API Key
-```bash
-# Windows PowerShell (permanent)
-[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "your_key_here", "User")
 
+**Quick Setup:**
+```bash
 # Windows PowerShell (current session)
 $env:ANTHROPIC_API_KEY = "your_anthropic_key_here"
 
+# Windows PowerShell (permanent)
+[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "your_key_here", "User")
+
 # Command Prompt
 set ANTHROPIC_API_KEY=your_anthropic_key_here
+
+# Linux/Mac
+export ANTHROPIC_API_KEY="your_anthropic_key_here"
 ```
+
+**Verify Setup:**
+```bash
+# Run validation script
+python tests/test_api_key_validation.py
+```
+
+**For detailed setup instructions, see:** `docs/API_KEY_SETUP.md`
 
 ### 2. Test the System
 ```bash
@@ -115,10 +128,9 @@ python ux_mirror_launcher.py  # Re-analyze to validate improvements
 
 ### CLI Commands
 ```bash
-# Multi-Agent System Management
-ux-tester agent start all              # Start all agents
-ux-tester agent status                 # View agent health
-ux-tester agent stop all               # Stop all agents
+# System Management (Unified Architecture)
+# Agent system removed - using unified architecture
+# All functionality is now integrated into core modules
 
 # Real-Time Monitoring
 ux-tester monitor start --interval 5.0 # Begin continuous monitoring

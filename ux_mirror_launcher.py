@@ -26,9 +26,6 @@ from tkinter import messagebox, ttk
 
 # UX-MIRROR imports
 try:
-    from agents.core_orchestrator import CoreOrchestrator
-    from agents.visual_analysis_agent import VisualAnalysisAgent
-    from core.adaptive_feedback import AdaptiveFeedbackEngine, UserEngagementAction
     from core.port_manager import PortManager, get_port_manager
     from core.secure_config import get_config_manager
     from game_testing_session import GameUXTestingController
@@ -141,14 +138,11 @@ class UXMirrorLauncher:
         # Initialize components
         self.app_detector = ApplicationDetector()
         self.port_manager = get_port_manager()
-        self.adaptive_engine = AdaptiveFeedbackEngine()
         self.config_manager = get_config_manager()
         
         # State
         self.selected_app = None
         self.analysis_running = False
-        self.orchestrator = None
-        self.visual_agent = None
         self.session_controller = None
         
         # Create UI
@@ -447,10 +441,6 @@ class UXMirrorLauncher:
         self.log_message("🛑 Stopping analysis...")
         
         # Clean up components
-        if self.orchestrator:
-            self.orchestrator.running = False
-        if self.visual_agent:
-            self.visual_agent.running = False
         
         self._reset_ui_state()
     
@@ -477,13 +467,14 @@ class UXMirrorLauncher:
         # Start analysis components
         session_id = f"launcher_session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Start adaptive session
-        session = self.adaptive_engine.start_session(session_id, {
+        # Start analysis session (simplified - no adaptive engine)
+        session = {
             'target_app': self.selected_app,
             'analysis_mode': self.analysis_mode.get(),
             'capture_input': self.capture_user_input.get(),
-            'show_overlay': self.show_analysis_overlay.get()
-        })
+            'show_overlay': self.show_analysis_overlay.get(),
+            'iterations': []
+        }
         
         # Update status
         self.root.after(0, lambda: self.status_text.set("Analysis running..."))
@@ -525,22 +516,13 @@ class UXMirrorLauncher:
                     self.root.after(0, lambda rec=rec: 
                         self.log_message(f"💡 Suggestion: {rec}"))
             
-            # Check what action to take based on confidence
-            action, context = self.adaptive_engine.determine_action(session_id)
-            
-            if action == UserEngagementAction.READY_FOR_REVIEW:
+            # Simplified action logic - continue until max iterations or stopped
+            if iteration >= 10:  # Max 10 iterations for MVP
                 self.root.after(0, lambda: self._analysis_complete("ready"))
                 break
-            elif action == UserEngagementAction.REQUEST_INPUT:
-                self.root.after(0, lambda: self._request_user_input())
-                # Wait for user input or timeout
-                await asyncio.sleep(10)  # Wait for user input
-            elif action == UserEngagementAction.IMMEDIATE_ATTENTION:
-                self.root.after(0, lambda: self._analysis_complete("critical"))
-                break
-            elif action == UserEngagementAction.SESSION_COMPLETE:
-                self.root.after(0, lambda: self._analysis_complete("complete"))
-                break
+            
+            # Continue analysis cycle
+            await asyncio.sleep(3)  # Wait between iterations
         
         if self.analysis_running:
             self.root.after(0, lambda: self._analysis_complete("timeout"))

@@ -1,4 +1,25 @@
 {
+  "ocr": {
+    "enabled": true,
+    "engine": "auto",
+    "language": "eng",
+    "preprocessing": true,
+    "confidence_threshold": 0.5,
+    "extract_from_elements": true,
+    "supported_languages": ["eng", "spa", "fra", "deu", "chi_sim"],
+    "engines": {
+      "tesseract": {
+        "enabled": true,
+        "priority": 1,
+        "config": "--oem 3 --psm 6"
+      },
+      "easyocr": {
+        "enabled": true,
+        "priority": 2,
+        "gpu": false
+      }
+    }
+  },
   "vision_apis": {
     "google_vision": {
       "enabled": true,
@@ -42,6 +63,21 @@
       ],
       "cost_per_request": 0.01,
       "priority": 3
+    },
+    "anthropic_vision": {
+      "enabled": true,
+      "api_key": "${ANTHROPIC_API_KEY}",
+      "model": "claude-3-opus-20240229",
+      "rate_limit": 50,
+      "max_tokens": 2000,
+      "features": [
+        "contextual_analysis",
+        "accessibility_assessment",
+        "ux_recommendations",
+        "detailed_ui_feedback"
+      ],
+      "cost_per_request": 0.015,
+      "priority": 2
     },
     "aws_rekognition": {
       "enabled": false,
@@ -176,4 +212,3 @@
       "error_rate": 5
     }
   }
-} 

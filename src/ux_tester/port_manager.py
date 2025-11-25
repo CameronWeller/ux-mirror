@@ -110,7 +110,7 @@ class PortManager:
         Allocate a port to a requester.
         
         Args:
-            requester_id: Identifier for the requester (e.g., "visual_analysis_agent")
+            requester_id: Identifier for the requester (e.g., "ux_analyzer")
             preferred_port: Preferred port number (will try this first)
             
         Returns:

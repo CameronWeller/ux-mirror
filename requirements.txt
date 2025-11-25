@@ -15,6 +15,11 @@ Pillow>=10.0.0
 scikit-image>=0.21.0
 matplotlib>=3.7.0
 
+# OCR (Optical Character Recognition)
+pytesseract>=0.3.10
+easyocr>=1.7.0  # Optional: better for complex fonts
+imutils>=0.5.4  # Image utilities for preprocessing
+
 # Scientific Computing and Data Analysis
 numpy>=1.24.0
 scipy>=1.11.0
@@ -169,4 +174,3 @@ uvicorn>=0.24.0
 pydantic>=2.0.0
 
 # User input tracking
-pynput>=1.7.6 

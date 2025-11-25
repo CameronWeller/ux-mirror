@@ -82,22 +82,24 @@ def test_application_detector():
         return False
 
 def test_orchestrator_improvements():
-    """Test the core orchestrator improvements"""
-    print("🎯 Testing Core Orchestrator Improvements...")
+    """Test the unified system improvements"""
+    print("🎯 Testing Unified System Improvements...")
     try:
-        from agents.core_orchestrator import CoreOrchestrator
+        # Agent system removed - using unified architecture
+        from core.screenshot_analyzer import ScreenshotAnalyzer
         
-        # Test creation with port management
-        orchestrator = CoreOrchestrator()
-        print(f"   ✅ Orchestrator created on port: {orchestrator.port}")
+        # Test creation
+        analyzer = ScreenshotAnalyzer()
+        print(f"   ✅ ScreenshotAnalyzer created successfully")
         
-        # Test configuration
-        config = orchestrator.config
-        print(f"   ⚙️ Configuration loaded: {len(config)} settings")
+        # Test that it has required methods
+        assert hasattr(analyzer, 'capture_screenshot')
+        assert hasattr(analyzer, 'analyze_image')
+        print(f"   ⚙️ Required methods available")
         
         return True
     except Exception as e:
-        print(f"   ❌ Orchestrator test failed: {e}")
+        print(f"   ❌ Unified system test failed: {e}")
         return False
 
 def test_file_structure():
@@ -170,4 +172,3 @@ def main():
 
 if __name__ == "__main__":
     success = main()
-    sys.exit(0 if success else 1) 

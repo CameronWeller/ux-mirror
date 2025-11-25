@@ -1,126 +1,117 @@
 #!/usr/bin/env python3
 """
-Desktop Shortcut Creator for UX-MIRROR + 3D Game of Life
-Creates a clickable desktop shortcut for easy access
+Create Desktop Shortcut for UX-MIRROR v0.1.0
+Creates a Windows desktop shortcut to launch the GUI launcher
 """
 
 import os
 import sys
 from pathlib import Path
-import winshell
-from win32com.client import Dispatch
 
-def create_desktop_shortcut():
-    """Create a desktop shortcut for the UX-MIRROR launcher"""
+def create_windows_shortcut():
+    """Create Windows desktop shortcut"""
+    try:
+        import win32com.client
+    except ImportError:
+        print("[INFO] pywin32 not available. Creating batch file instead.")
+        return create_batch_file()
     
     # Get paths
-    base_path = Path.cwd()
-    launcher_script = base_path / "launch_ux_mirror.py"
-    launcher_bat = base_path / "launch_ux_mirror.bat"
+    project_root = Path(__file__).parent.absolute()
+    launcher_path = project_root / "ux_mirror_launcher.py"
+    python_exe = sys.executable
+    desktop = Path.home() / "Desktop"
     
-    # Desktop path
-    desktop = winshell.desktop()
-    shortcut_path = os.path.join(desktop, "UX-MIRROR + 3D Game of Life.lnk")
+    # Ensure Desktop exists
+    desktop.mkdir(parents=True, exist_ok=True)
     
-    # Determine which launcher to use
-    if launcher_bat.exists():
-        target = str(launcher_bat)
-        icon_path = None
-    elif launcher_script.exists():
-        target = f'"{sys.executable}" "{launcher_script}"'
-        icon_path = None
-    else:
-        print("❌ Error: No launcher found!")
-        return False
-    
+    # Create shortcut
     try:
-        # Create shortcut
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(shortcut_path)
-        shortcut.Targetpath = target
-        shortcut.WorkingDirectory = str(base_path)
-        shortcut.Description = "UX-MIRROR + 3D Game of Life - Intelligent UX Analysis"
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut_path = desktop / "UX-MIRROR v0.1.0.lnk"
+        shortcut = shell.CreateShortCut(str(shortcut_path))
         
-        if icon_path:
-            shortcut.IconLocation = icon_path
+        shortcut.Targetpath = python_exe
+        shortcut.Arguments = f'"{launcher_path}"'
+        shortcut.WorkingDirectory = str(project_root)
+        shortcut.IconLocation = python_exe
+        shortcut.Description = "UX-MIRROR v0.1.0 - AI-Powered UX Analysis Tool"
         
         shortcut.save()
         
-        print(f"✅ Desktop shortcut created: {shortcut_path}")
+        print(f"[SUCCESS] Desktop shortcut created: {shortcut_path}")
         return True
-        
     except Exception as e:
-        print(f"❌ Error creating shortcut: {e}")
-        return False
+        print(f"[INFO] Could not create .lnk shortcut: {e}")
+        print("  Creating batch file instead...")
+        return create_batch_file()
 
-def create_start_menu_shortcut():
-    """Create a start menu shortcut"""
+def create_batch_file():
+    """Create batch file as fallback"""
+    project_root = Path(__file__).parent.absolute()
+    launcher_path = project_root / "ux_mirror_launcher.py"
+    python_exe = sys.executable
+    desktop = Path.home() / "Desktop"
     
-    try:
-        # Get paths
-        base_path = Path.cwd()
-        launcher_bat = base_path / "launch_ux_mirror.bat"
-        
-        # Start menu path
-        start_menu = winshell.start_menu()
-        programs_path = os.path.join(start_menu, "Programs")
-        shortcut_path = os.path.join(programs_path, "UX-MIRROR + 3D Game of Life.lnk")
-        
-        # Create shortcut
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(shortcut_path)
-        shortcut.Targetpath = str(launcher_bat)
-        shortcut.WorkingDirectory = str(base_path)
-        shortcut.Description = "UX-MIRROR + 3D Game of Life - Intelligent UX Analysis"
-        shortcut.save()
-        
-        print(f"✅ Start menu shortcut created: {shortcut_path}")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Error creating start menu shortcut: {e}")
-        return False
+    # Ensure Desktop directory exists
+    desktop.mkdir(parents=True, exist_ok=True)
+    
+    batch_content = f"""@echo off
+cd /d "{project_root}"
+"{python_exe}" "{launcher_path}"
+pause
+"""
+    
+    batch_path = desktop / "UX-MIRROR v0.1.0.bat"
+    with open(batch_path, 'w') as f:
+        f.write(batch_content)
+    
+    print(f"[SUCCESS] Batch file created: {batch_path}")
+    print("  Note: You can create a shortcut from this batch file manually")
+    return True
 
-def main():
-    """Main entry point"""
-    print("🎯 UX-MIRROR Shortcut Creator")
-    print("=" * 40)
+def create_powershell_script():
+    """Create PowerShell script as alternative"""
+    project_root = Path(__file__).parent.absolute()
+    launcher_path = project_root / "ux_mirror_launcher.py"
+    python_exe = sys.executable
+    desktop = Path.home() / "Desktop"
     
-    # Check if running on Windows
-    if sys.platform != "win32":
-        print("❌ This script is designed for Windows only")
-        return
+    ps_content = f"""# UX-MIRROR v0.1.0 Launcher
+Set-Location "{project_root}"
+& "{python_exe}" "{launcher_path}"
+"""
     
-    # Try to import required modules
-    try:
-        import winshell
-        from win32com.client import Dispatch
-    except ImportError:
-        print("❌ Required modules not found. Installing...")
-        import subprocess
-        subprocess.run([sys.executable, "-m", "pip", "install", "pywin32", "winshell"])
-        try:
-            import winshell
-            from win32com.client import Dispatch
-        except ImportError:
-            print("❌ Failed to install required modules")
-            return
+    ps_path = desktop / "UX-MIRROR v0.1.0.ps1"
+    with open(ps_path, 'w', encoding='utf-8') as f:
+        f.write(ps_content)
     
-    # Create shortcuts
-    desktop_success = create_desktop_shortcut()
-    start_menu_success = create_start_menu_shortcut()
-    
-    if desktop_success or start_menu_success:
-        print("\n🎉 Shortcuts created successfully!")
-        print("You can now launch UX-MIRROR + 3D Game of Life from:")
-        if desktop_success:
-            print("  📍 Desktop shortcut")
-        if start_menu_success:
-            print("  📍 Start Menu -> Programs")
-    else:
-        print("\n❌ Failed to create shortcuts")
-    
-    input("\nPress Enter to continue...")
+    print(f"[SUCCESS] PowerShell script created: {ps_path}")
+    return True
 
 if __name__ == "__main__":
-    main() 
+    print("=" * 60)
+    print("UX-MIRROR v0.1.0 - Desktop Shortcut Creator")
+    print("=" * 60)
+    print()
+    
+    if os.name == 'nt':  # Windows
+        print("Creating Windows desktop shortcut...")
+        if create_windows_shortcut():
+            print()
+            print("[SUCCESS] Shortcut created successfully!")
+            print("  You can now launch UX-MIRROR from your desktop")
+        else:
+            print()
+            print("Creating alternative launcher files...")
+            create_batch_file()
+            create_powershell_script()
+    else:
+        print("Creating launcher script for non-Windows system...")
+        create_powershell_script()
+    
+    print()
+    print("=" * 60)
+    print("Done!")
+    print("=" * 60)
+

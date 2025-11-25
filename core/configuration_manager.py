@@ -130,13 +130,9 @@ class ConfigurationManager:
         # Load schemas first
         self._load_schemas()
         
-        # Load configuration files
+        # Load configuration files (v0.1.0 - simplified)
         config_files = [
-            "orchestrator_config.json",
-            "vision_config.json",
-            "api_config.json",
-            "monitoring_config.json",
-            "agent_config.json"
+            "vision_config.json"
         ]
         
         for config_file in config_files:
@@ -306,8 +302,8 @@ class ConfigurationManager:
         Get configuration value using dot notation.
         
         Examples:
-            get('orchestrator.task_processing.max_concurrent_tasks')
-            get('api.endpoints.status_endpoint')
+            get('vision.anthropic.api_key')
+            get('vision.ocr_settings.enabled')
         """
         keys = key.split('.')
         
@@ -334,7 +330,7 @@ class ConfigurationManager:
         Set configuration value using dot notation.
         
         Args:
-            key: Dot-notated key (e.g., 'orchestrator.monitoring.interval')
+            key: Dot-notated key (e.g., 'vision.ocr_settings.enabled')
             value: Value to set
             persist: Whether to save to file
         """

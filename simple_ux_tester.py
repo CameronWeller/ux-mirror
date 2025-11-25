@@ -14,12 +14,14 @@ Usage:
 """
 
 import argparse
+import base64
 import json
 import logging
 import time
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from typing import Dict, Any, Optional, Tuple, List
 
 import cv2
 import numpy as np
@@ -48,12 +50,20 @@ except ImportError:
     REQUESTS_AVAILABLE = False
 
 class SimpleUXTester:
-    def __init__(self, output_dir="ux_captures"):
+    """Simple UX testing tool for manual screenshot-based testing."""
+    
+    def __init__(self, output_dir: str = "ux_captures") -> None:
+        """
+        Initialize the UX tester.
+        
+        Args:
+            output_dir: Directory to save screenshots and results
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.config = self._load_config()
         
-    def _load_config(self):
+    def _load_config(self) -> Dict[str, Any]:
         """Load configuration from config.env"""
         config = {
             'response_time_threshold': 500,
@@ -93,7 +103,11 @@ class SimpleUXTester:
             
         return config
     
-    def capture_screenshot(self, label="screenshot", expected_content=None):
+    def capture_screenshot(
+        self, 
+        label: str = "screenshot", 
+        expected_content: Optional[str] = None
+    ) -> Tuple[Path, Dict[str, Any]]:
         """Capture a screenshot with timestamp and optional content expectation"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
         filename = f"{timestamp}_{label}.png"
@@ -124,15 +138,15 @@ class SimpleUXTester:
         print(f"Screenshot saved: {filepath}")
         return filepath, metadata
     
-    def capture_before(self, expected_content=None):
-        """Capture 'before' screenshot"""
+    def capture_before(self, expected_content: Optional[str] = None) -> Tuple[Path, Dict[str, Any]]:
+        """Capture 'before' screenshot."""
         return self.capture_screenshot("before", expected_content)
     
-    def capture_after(self, expected_content=None):
-        """Capture 'after' screenshot"""
+    def capture_after(self, expected_content: Optional[str] = None) -> Tuple[Path, Dict[str, Any]]:
+        """Capture 'after' screenshot."""
         return self.capture_screenshot("after", expected_content)
     
-    def find_latest_pair(self):
+    def find_latest_pair(self) -> Tuple[Optional[Path], Optional[Path]]:
         """Find the most recent before/after screenshot pair"""
         before_files = list(self.output_dir.glob("*_before.png"))
         after_files = list(self.output_dir.glob("*_after.png"))
@@ -158,7 +172,11 @@ class SimpleUXTester:
         # If no perfect match, use most recent of each
         return before_files[0], after_files[0]
     
-    def analyze_screenshots(self, before_path=None, after_path=None):
+    def analyze_screenshots(
+        self, 
+        before_path: Optional[Path] = None, 
+        after_path: Optional[Path] = None
+    ) -> Optional[Dict[str, Any]]:
         """Analyze before/after screenshots for UX quality"""
         if before_path is None or after_path is None:
             before_path, after_path = self.find_latest_pair()
@@ -219,7 +237,11 @@ class SimpleUXTester:
         
         return analysis
     
-    def _detect_ui_changes(self, before_img, after_img):
+    def _detect_ui_changes(
+        self, 
+        before_img: np.ndarray, 
+        after_img: np.ndarray
+    ) -> float:
         """Detect visual changes between screenshots"""
         # Resize images to same size if different
         if before_img.shape != after_img.shape:
@@ -238,7 +260,11 @@ class SimpleUXTester:
         
         return change_score
     
-    def _calculate_response_time(self, before_path, after_path):
+    def _calculate_response_time(
+        self, 
+        before_path: Path, 
+        after_path: Path
+    ) -> float:
         """Calculate response time from metadata timestamps"""
         try:
             before_meta_file = before_path.with_suffix('.json')
@@ -259,7 +285,7 @@ class SimpleUXTester:
             print(f"Warning: Could not calculate response time: {e}")
             return 0
     
-    def _check_visual_quality(self, img):
+    def _check_visual_quality(self, img: np.ndarray) -> List[str]:
         """Check for basic visual quality issues"""
         issues = []
         
@@ -283,7 +309,7 @@ class SimpleUXTester:
         
         return issues
     
-    def _assess_ux_quality(self, results):
+    def _assess_ux_quality(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Provide overall UX quality assessment"""
         score = 100
         issues = []
@@ -331,7 +357,7 @@ class SimpleUXTester:
             'issues': issues
         }
     
-    def _print_analysis_summary(self, analysis):
+    def _print_analysis_summary(self, analysis: Dict[str, Any]) -> None:
         """Print human-readable analysis summary"""
         results = analysis['results']
         quality = results['ux_quality']
@@ -391,7 +417,7 @@ class SimpleUXTester:
         
         print("="*50)
     
-    def list_captures(self):
+    def list_captures(self) -> None:
         """List all captured screenshots"""
         screenshots = list(self.output_dir.glob("*.png"))
         screenshots.sort(reverse=True)
@@ -404,10 +430,10 @@ class SimpleUXTester:
                 with open(metadata_file, 'r') as f:
                     metadata = json.load(f)
                 print(f"  {screenshot.name} - {metadata.get('capture_time', 'Unknown time')}")
-            except:
+            except Exception:
                 print(f"  {screenshot.name}")
     
-    def clean_old_captures(self, keep_count=20):
+    def clean_old_captures(self, keep_count: int = 20) -> None:
         """Clean up old screenshots, keep only recent ones"""
         screenshots = list(self.output_dir.glob("*.png"))
         screenshots.sort(reverse=True)
@@ -427,7 +453,11 @@ class SimpleUXTester:
         
         print(f"Kept {keep_count} most recent screenshots")
     
-    def _validate_content_expectations(self, before_path, after_path):
+    def _validate_content_expectations(
+        self, 
+        before_path: Path, 
+        after_path: Path
+    ) -> Dict[str, Any]:
         """Use AI vision to validate if screen content matches expectations"""
         validation = {
             'before_content_valid': True,
@@ -489,16 +519,20 @@ class SimpleUXTester:
         
         return validation
     
-    def _load_metadata(self, image_path):
+    def _load_metadata(self, image_path: Path) -> Optional[Dict[str, Any]]:
         """Load metadata for a screenshot"""
         try:
             metadata_file = image_path.with_suffix('.json')
             with open(metadata_file, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             return None
     
-    def _analyze_screenshot_content(self, image_path, expected_content):
+    def _analyze_screenshot_content(
+        self, 
+        image_path: Path, 
+        expected_content: str
+    ) -> Tuple[bool, str, Optional[str]]:
         """Use AI vision to analyze screenshot content (tries Anthropic first, then OpenAI)"""
         
         # Convert image to base64
@@ -642,4 +676,3 @@ def main():
         tester.clean_old_captures(args.keep)
 
 if __name__ == "__main__":
-    main() 

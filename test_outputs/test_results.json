@@ -1,0 +1,72 @@
+{
+  "summary": {
+    "total": 9,
+    "passed": 3,
+    "failed": 2,
+    "skipped": 4
+  },
+  "results": [
+    {
+      "name": "Screenshot Capture",
+      "passed": false,
+      "message": "Missing dependency: No module named 'PIL'",
+      "details": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "AI Analysis",
+      "passed": false,
+      "message": "No API keys configured",
+      "details": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "UI Detection",
+      "passed": false,
+      "message": "Missing dependency: No module named 'PIL'",
+      "details": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "CLI",
+      "passed": false,
+      "message": "Missing dependency: No module named 'requests'",
+      "details": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "GUI Launcher - File",
+      "passed": true,
+      "message": "Launcher file found",
+      "details": {}
+    },
+    {
+      "name": "GUI Launcher - Imports",
+      "passed": true,
+      "message": "tkinter available",
+      "details": {}
+    },
+    {
+      "name": "GUI Launcher - Syntax",
+      "passed": true,
+      "message": "Syntax valid",
+      "details": {}
+    },
+    {
+      "name": "Error Handling",
+      "passed": false,
+      "message": "Unexpected error: No module named 'PIL'",
+      "details": {}
+    },
+    {
+      "name": "Integration",
+      "passed": false,
+      "message": "Unexpected error: No module named 'PIL'",
+      "details": {}
+    }
+  ]
+}

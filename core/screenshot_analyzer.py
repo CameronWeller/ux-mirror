@@ -8,14 +8,14 @@ for use with the game testing system.
 
 import asyncio
 import os
-import sys
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import logging
 
-# Import the existing functionality
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from PIL import ImageGrab
+from PIL import Image as PILImage
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -26,39 +26,47 @@ class ScreenshotAnalyzer:
         self.screenshot_dir = "screenshots"
         Path(self.screenshot_dir).mkdir(exist_ok=True)
         
-    async def capture_screenshot(self) -> str:
-        """Capture a screenshot and return the file path"""
+    async def capture_screenshot(self) -> Optional[str]:
+        """
+        Capture a screenshot and return the file path.
+        
+        Returns:
+            Path to captured screenshot or None if failed
+        """
         try:
-            import PIL.ImageGrab as ImageGrab
-            
             # Generate timestamp filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"screenshot_{timestamp}.png"
-            filepath = os.path.join(self.screenshot_dir, filename)
+            filepath = Path(self.screenshot_dir) / filename
             
             # Capture screenshot
             screenshot = ImageGrab.grab()
-            screenshot.save(filepath)
+            screenshot.save(str(filepath))
             
             logger.info(f"Screenshot captured: {filepath}")
-            return filepath
+            return str(filepath)
             
         except Exception as e:
             logger.error(f"Failed to capture screenshot: {e}")
             return None
     
     async def analyze_image(self, image_path: str) -> Dict[str, Any]:
-        """Analyze a screenshot image"""
+        """
+        Analyze a screenshot image.
+        
+        Args:
+            image_path: Path to image file
+            
+        Returns:
+            Analysis results dictionary
+        """
         try:
-            if not os.path.exists(image_path):
+            image_path_obj = Path(image_path)
+            if not image_path_obj.exists():
                 return {"error": "Image file not found"}
             
-            # Basic analysis using PIL
-            from PIL import Image
-            import numpy as np
-            
             # Load image
-            image = Image.open(image_path)
+            image = PILImage.open(image_path_obj)
             img_array = np.array(image)
             
             # Basic metrics
@@ -114,4 +122,3 @@ class ScreenshotAnalyzer:
                 "accessibility_issues": ["Analysis failed"],
                 "performance_assessment": "unknown",
                 "recommendations": ["Check image file and try again"]
-            } 

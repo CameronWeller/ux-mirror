@@ -1,269 +1,196 @@
-# UX-MIRROR: Self-Programming GPU-Driven UX Intelligence System
+# UX-MIRROR v0.1.0
 
-## Project Vision
+**Simple AI-powered UX analysis for desktop applications**
 
-UX-MIRROR is an autonomous neural network system that creates a feedback loop between user experience data and GPU-accelerated self-programming capabilities. The system continuously monitors, analyzes, and improves user interfaces by feeding real-time UX metrics directly back into its own programming algorithms, creating a "mirror" effect where the system evolves based on the very experiences it's designed to optimize.
+UX-MIRROR is a focused tool that captures screenshots of your applications, analyzes them with AI vision, and provides actionable UX feedback and recommendations.
 
-## Core Concept
+## 🎯 What is UX-MIRROR?
 
-The name "UX-MIRROR" reflects the project's fundamental approach: creating a reflective feedback system where:
-- **UX data flows INTO the GPU** that's programming itself
-- **AI improvements flow OUT OF the GPU** back into the user experience
-- **Continuous learning mirrors** user behavior patterns back into system optimization
-- **Self-programming capabilities** evolve based on real-world usage data
+UX-MIRROR helps you improve user interfaces by:
+- **Capturing screenshots** of your desktop applications
+- **Analyzing UI** with AI vision (Claude/OpenAI)
+- **Detecting issues** like poor contrast, spacing problems, accessibility concerns
+- **Providing recommendations** with specific, actionable feedback
 
-## Unified Architecture
+## ✨ Features
 
-### Primary Agent (Head Agent)
-**UX-MIRROR Core Orchestrator**
-- Coordinates all sub-agents and maintains the feedback loop
-- Manages GPU resource allocation and self-programming cycles
-- Oversees the data mirror between user metrics and system improvements
-- Handles cross-platform deployment and scaling decisions
+### Core Capabilities
+- 📸 **Screenshot Capture** - Capture screenshots of any desktop application
+- 🤖 **AI Vision Analysis** - Powered by Anthropic Claude and OpenAI Vision
+- 🔍 **UI Element Detection** - Automatic detection of buttons, text, inputs, and more
+- 📝 **OCR Text Extraction** - Extract and analyze text from UI elements
+- 📊 **Quality Scoring** - Get quality scores and detailed metrics
+- 💡 **Actionable Recommendations** - Specific suggestions for improvement
 
-### Sub-Agents (Reporting to Core Orchestrator)
+### User Interfaces
+- 🖥️ **GUI Launcher** - Easy-to-use graphical interface
+- ⌨️ **CLI Tool** - Command-line interface for automation
 
-#### 1. **Metrics Intelligence Agent**
-- **Purpose**: Real-time user behavior tracking and analysis
-- **Capabilities**:
-  - Multi-platform user interaction monitoring
-  - Performance metrics collection (FPS, response times, error rates)
-  - User engagement pattern analysis
-  - Accessibility compliance monitoring
-  - A/B testing coordination and result analysis
-- **Data Sources**: Click streams, eye tracking, performance counters, crash reports
+## 🚀 Quick Start
 
-#### 2. **Visual Analysis Agent** 
-- **Purpose**: Computer vision-powered UI/UX assessment
-- **Capabilities**:
-  - Real-time screenshot analysis and UI element detection
-  - Visual hierarchy assessment and accessibility evaluation
-  - Cross-platform design consistency validation
-  - Automatic UX issue detection (contrast, spacing, alignment)
-  - Layout optimization recommendations
-- **Technologies**: OpenCV, PyTorch Vision, OCR, color analysis
+### Installation
 
-#### 3. **Autonomous Implementation Agent**
-- **Purpose**: Self-programming and code generation
-- **Capabilities**:
-  - GPU-accelerated code generation for UI improvements
-  - Automatic CSS/styling optimization based on metrics
-  - Component library updates and design system evolution
-  - Performance optimization code injection
-  - Cross-platform compatibility code generation
-- **Technologies**: GPT-based code models, AST manipulation, hot-swapping
-
-## Technical Foundation
-
-### GPU-Centric Architecture
-- **Primary Processing**: NVIDIA RTX 4000+ series or AMD RX 7000+ series
-- **Fallback Support**: Intel Arc or integrated graphics for development
-- **Memory Requirements**: 16GB+ VRAM for full model pipeline
-- **Self-Programming**: CUDA/ROCm kernels that evolve based on UX feedback
-
-### Real-Time Data Pipeline
-```
-User Interactions → Metrics Collection → GPU Processing → Pattern Recognition
-                        ↓                    ↓              ↓
-Performance Data → Analytics Engine → Neural Training → Code Generation
-                        ↓                    ↓              ↓
-Visual Capture → Computer Vision → Quality Assessment → Implementation
-                        ↓                    ↓              ↓
-Feedback Loop → Model Updates → Self-Programming → UX Improvements
-```
-
-### Cross-Platform Deployment
-- **Web Applications**: React/Vue.js integration with metrics SDK
-- **Desktop Applications**: Electron wrapper with native performance monitoring
-- **Game Engines**: Unity/Unreal plugins for real-time UX tracking
-- **Mobile Apps**: React Native/Flutter integration with device-specific metrics
-
-## Key Features
-
-### 1. **Continuous UX Monitoring**
-- Real-time user interaction tracking across all platforms
-- Performance impact assessment for every UI element
-- Automatic accessibility compliance checking
-- Cross-device experience consistency validation
-
-### 2. **AI-Driven UX Analysis**
-- Computer vision analysis of interface effectiveness
-- Machine learning-powered user behavior prediction
-- Automatic identification of UX friction points
-- Intelligent A/B testing with dynamic optimization
-
-### 3. **Self-Programming Capabilities**
-- GPU-accelerated code generation based on UX insights
-- Automatic performance optimization implementation
-- Dynamic UI component evolution based on usage patterns
-- Cross-platform code adaptation and deployment
-
-### 4. **Predictive UX Intelligence**
-- User behavior forecasting and preemptive optimization
-- Trend analysis for emerging UX patterns
-- Personalized interface adaptation per user segment
-- Proactive accessibility improvement suggestions
-
-## Implementation Roadmap
-
-### Phase 1: Foundation (Weeks 1-4)
-- Set up unified project structure and agent communication
-- Implement basic metrics collection across web/desktop/mobile
-- Establish GPU-based visual analysis pipeline
-- Create core orchestrator agent with basic coordination
-
-### Phase 2: Intelligence Integration (Weeks 5-8)
-- Deploy machine learning models for UX pattern recognition
-- Implement real-time visual analysis and quality assessment
-- Build automated A/B testing framework
-- Establish feedback loop between metrics and GPU processing
-
-### Phase 3: Autonomous Implementation (Weeks 9-12)
-- Enable GPU-powered code generation based on UX insights
-- Implement automatic deployment of UX improvements
-- Create self-programming capabilities for system evolution
-- Deploy cross-platform optimization and adaptation
-
-### Phase 4: Advanced Mirror Systems (Weeks 13-16)
-- Implement predictive UX intelligence and forecasting
-- Enable real-time personalization based on user segments
-- Deploy advanced accessibility and inclusion features
-- Create ecosystem for third-party UX mirror integration
-
-## Success Metrics
-
-### Technical Performance
-- **GPU Utilization**: >80% efficient processing during active cycles
-- **Real-time Processing**: <50ms latency for UX analysis
-- **Self-Programming Accuracy**: >90% successful code improvements
-- **Cross-Platform Consistency**: >95% feature parity across platforms
-
-### UX Impact Metrics
-- **User Engagement**: +25% improvement in key interaction metrics
-- **Performance Optimization**: +30% faster load times and responsiveness
-- **Accessibility Compliance**: 100% WCAG 2.1 AA compliance
-- **User Satisfaction**: +40% improvement in UX survey scores
-
-## Getting Started
-
-### Prerequisites
-- Modern GPU with 8GB+ VRAM (RTX 3070+ or RX 6700 XT+)
-- 32GB+ system RAM for optimal performance
-- Python 3.11+ with PyTorch 2.1+
-- Node.js 18+ for real-time communication layers
-
-### Quick Start
 ```bash
-# Clone and setup the unified UX-MIRROR system
+# Clone the repository
 git clone https://github.com/your-org/ux-mirror.git
 cd ux-mirror
 
 # Install dependencies
 pip install -r requirements.txt
-npm install
-
-# Initialize the GPU processing pipeline
-python setup_gpu_pipeline.py
-
-# Start the Core Orchestrator Agent
-python agents/core_orchestrator.py
-
-# Launch metrics collection across platforms
-npm run start:metrics-collection
 ```
 
-### Playwright Integration
+### Setup
 
-UX-Mirror integrates with Playwright for web automation, building **on top of** Playwright rather than duplicating its features.
+1. **Get an API key** from [Anthropic](https://www.anthropic.com/) or [OpenAI](https://openai.com/)
 
-**What Playwright provides:**
-- Web navigation and interaction
-- Screenshot capture
-- Element selection and waiting
+2. **Set your API key**:
+   ```bash
+   # Windows PowerShell
+   $env:ANTHROPIC_API_KEY = "your_key_here"
+   
+   # Linux/Mac
+   export ANTHROPIC_API_KEY="your_key_here"
+   ```
 
-**What UX-Mirror adds:**
-- AI vision analysis of screenshots
-- UX metrics and feedback
-- Developer-friendly recommendations
-- **Active user monitoring** - Watch users interact and detect problems in real-time
+### Usage
 
-**Quick Examples:**
-
-```python
-# Analyze a page
-from src.integration.playwright_adapter import PlaywrightUXMirrorAdapter
-
-adapter = PlaywrightUXMirrorAdapter(api_key="your-key")
-await adapter.start()
-results = await adapter.navigate_and_analyze("https://example.com")
-print(results["feedback"]["summary"])
-await adapter.stop()
-```
-
-```python
-# Monitor active user and detect problems
-from src.integration.playwright_active_monitor import PlaywrightActiveMonitor
-
-monitor = PlaywrightActiveMonitor(api_key="your-key")
-monitor.on_problem_detected = lambda p: print(f"Problem: {p.description}")
-await monitor.start_monitoring("https://example.com", headless=False)
-# User interacts, problems detected automatically
-```
-
-**CLI Usage:**
+#### GUI Launcher (Recommended)
 ```bash
-# Analyze a page
-ux-tester playwright analyze https://example.com
-
-# Watch user interact and detect problems
-ux-tester playwright monitor https://example.com
+python ux_mirror_launcher.py
 ```
 
-See [docs/PLAYWRIGHT_INTEGRATION_GUIDE.md](docs/PLAYWRIGHT_INTEGRATION_GUIDE.md) and [docs/ACTIVE_MONITORING_GUIDE.md](docs/ACTIVE_MONITORING_GUIDE.md) for full documentation.
+1. Select your target application from the list
+2. Click "Start Analysis"
+3. Review the AI-generated feedback and recommendations
 
-### Universal Active Monitoring
-
-Monitor **ANY application type** and detect performance issues:
-
-- 🌐 **Web Apps**: Via Playwright
-- 🪟 **Windows Executables**: Native capture  
-- 🎮 **Games**: FPS/stutter/hitch detection
-- 📱 **Mobile Apps**: Device capture
-
-**Detects:**
-- **Hitches**: Severe frame time spikes (>100ms)
-- **Stuttering**: Frame time variance (>33ms)
-- **FPS Drops**: Performance degradation
-- **Errors**: Application issues
-- **User Confusion**: Friction points
-
-```python
-from src.integration.universal_active_monitor import UniversalActiveMonitor, ApplicationType
-
-# Monitor game with FPS tracking
-monitor = UniversalActiveMonitor(api_key, ApplicationType.GAME)
-monitor.target_fps = 60.0
-monitor.stutter_threshold_ms = 16.67  # 60fps = 16.67ms per frame
-await monitor.start_monitoring("game.exe")
-```
-
+#### CLI Tool
 ```bash
-# CLI usage
-ux-tester monitor-universal game game.exe --target-fps 60
-ux-tester monitor-universal windows notepad.exe
-ux-tester monitor-universal web https://example.com
+# Analyze a running application
+ux-tester analyze --target "MyApp.exe"
+
+# Game testing mode
+ux-tester game --iterations 5
 ```
 
-See [docs/UNIVERSAL_MONITORING_GUIDE.md](docs/UNIVERSAL_MONITORING_GUIDE.md) for full documentation.
+## 📖 Examples
 
-## Contributing
+### Basic Analysis
+```python
+from core.screenshot_analyzer import ScreenshotAnalyzer
 
-UX-MIRROR thrives on the same feedback loops it creates. Contributions that enhance the self-programming capabilities, improve cross-platform compatibility, or extend the metrics intelligence are especially welcome.
+analyzer = ScreenshotAnalyzer()
+result = analyzer.analyze_screenshot("screenshot.png")
+print(f"Quality Score: {result['quality_score']}")
+print(f"Issues Found: {len(result['issues'])}")
+```
 
-## License
+### CLI Usage
+```bash
+# Capture and analyze
+ux-tester test --before
+# ... perform your UI interaction ...
+ux-tester test --after
+ux-tester test --analyze
+```
 
-MIT License - Reflecting our commitment to open, mirror-like transparency in UX intelligence.
+## 🎯 Use Cases
+
+- **Game Development** - Analyze game UIs for accessibility and usability
+- **Desktop Applications** - Get feedback on desktop app interfaces
+- **UI/UX Design** - Validate design decisions with AI analysis
+- **Accessibility Testing** - Detect contrast and accessibility issues
+- **Quality Assurance** - Automated UI quality checks
+
+## 📋 Requirements
+
+- **Python**: 3.8 or higher
+- **Operating System**: Windows, macOS, or Linux
+- **API Key**: Anthropic Claude or OpenAI Vision API key
+- **Dependencies**: See `requirements.txt`
+
+## 🔧 Configuration
+
+Create a `config.env` file or set environment variables:
+
+```env
+ANTHROPIC_API_KEY=your_anthropic_key_here
+OPENAI_API_KEY=your_openai_key_here
+RESPONSE_TIME_THRESHOLD=500
+UI_CHANGE_THRESHOLD=0.05
+```
+
+## 📁 Project Structure
+
+```
+ux-mirror/
+├── src/
+│   ├── analysis/          # Analysis modules
+│   ├── capture/           # Screenshot capture
+│   └── ux_tester/         # Core testing logic
+├── core/                  # Core functionality
+├── cli/                   # CLI interface
+├── config/                # Configuration files
+├── ux_mirror_launcher.py  # GUI launcher
+└── simple_ux_tester.py    # Simple CLI tool
+```
+
+## 🐛 Troubleshooting
+
+### "API key not found"
+- Make sure you've set the `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` environment variable
+- Check that the API key is valid and has credits
+
+### "Application not detected"
+- Make sure the target application is running
+- Try running UX-MIRROR with administrator privileges (Windows)
+
+### "Analysis failed"
+- Check your internet connection (API calls required)
+- Verify your API key has sufficient credits
+- Check the logs for detailed error messages
+
+## 📚 Documentation
+
+- [Usage Guide](USAGE_GUIDE.md) - Detailed usage instructions
+- [Release Notes](CHANGELOG.md) - Version history
+- [v0.1.0 Roadmap](v0.1.0_ROADMAP.md) - Development roadmap
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 🗺️ Roadmap
+
+### v0.1.0 (Current)
+- ✅ Core screenshot capture
+- ✅ AI vision analysis
+- ✅ UI element detection
+- ✅ OCR text extraction
+- ✅ CLI and GUI interfaces
+
+### v0.2.0 (Planned)
+- Web application support
+- Real-time monitoring
+- Advanced OCR features
+
+### v1.0.0 (Future)
+- Self-programming capabilities
+- GPU acceleration
+- Multi-platform integrations
+
+## 🙏 Acknowledgments
+
+- Built with [Anthropic Claude](https://www.anthropic.com/) and [OpenAI](https://openai.com/) vision APIs
+- Uses [OpenCV](https://opencv.org/) for computer vision
+- Uses [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) for text extraction
 
 ---
 
-*UX-MIRROR: Where user experience data becomes the mirror for AI self-improvement.* 
+**Version**: 0.1.0  
+**Status**: Beta  
+**Last Updated**: 2025-01-XX
+

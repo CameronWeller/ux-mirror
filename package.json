@@ -11,21 +11,6 @@
   "scripts": {
     "start": "node src/index.js",
     "start:core": "python start_core_system.py",
-    "start:simple-orchestrator": "python agents/simple_orchestrator.py",
-    "start:orchestrator": "python agents/core_orchestrator.py",
-    "start:visual-analysis": "python agents/visual_analysis_agent.py",
-    "start:metrics-intelligence": "python agents/metrics_intelligence.py",
-    "start:autonomous-implementation": "python agents/autonomous_implementation.py",
-    "start:metrics-collection": "node src/metrics-collection/index.js",
-    "start:all-agents": "concurrently \"ux-tester agent start orchestrator\" \"ux-tester agent start visual\" \"ux-tester agent start metrics\"",
-    "start:legacy-agents": "concurrently \"npm run start:orchestrator\" \"npm run start:metrics-intelligence\" \"npm run start:visual-analysis\" \"npm run start:autonomous-implementation\"",
-    "start:monitoring": "ux-tester monitor start",
-    "stop:monitoring": "ux-tester monitor stop",
-    "agent:start": "ux-tester agent start all",
-    "agent:stop": "ux-tester agent stop all",
-    "agent:status": "ux-tester agent status",
-    "insights": "ux-tester insights",
-    "monitor:status": "ux-tester monitor status",
     "dev": "nodemon src/index.js",
     "build": "webpack --mode=production",
     "build:web": "webpack --config webpack.web.config.js",
@@ -253,24 +238,6 @@
   },
   "ux-mirror": {
     "version": "1.0.0",
-    "agents": {
-      "core_orchestrator": {
-        "port": 8765,
-        "gpu_allocation": 0.1
-      },
-      "metrics_intelligence": {
-        "gpu_allocation": 0.3,
-        "collection_interval": 100
-      },
-      "visual_analysis": {
-        "gpu_allocation": 0.4,
-        "analysis_interval": 500
-      },
-      "autonomous_implementation": {
-        "gpu_allocation": 0.2,
-        "deployment_queue_size": 10
-      }
-    },
     "platforms": {
       "web": {
         "enabled": true,
