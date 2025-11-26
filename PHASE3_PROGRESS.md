@@ -3,7 +3,7 @@
 **Started:** 2025-01-XX  
 **Status:** 🔄 In Progress  
 **Total Steps:** 14  
-**Completed:** 2/14 (14%)
+**Completed:** 4/14 (29%)
 
 ## Progress Summary
 
@@ -25,10 +25,17 @@
   - ✅ 28.7: Check quality score
   - ✅ 28.8: Generate report
 
-### 🔄 Remaining Steps (12)
-- Step 28: Test workflow with Notepad
-- Step 29: Test workflow with Calculator
-- Step 30: Test workflow with browser
+### ✅ Step 29: Test workflow with Calculator application
+- **Status:** ✅ Complete
+- **File:** `tests/integration/test_calculator_workflow.py`
+- **Tests:** All 8 substeps implemented
+
+### ✅ Step 30: Test workflow with browser application
+- **Status:** ✅ Complete
+- **File:** `tests/integration/test_browser_workflow.py`
+- **Tests:** All 8 substeps implemented
+
+### 🔄 Remaining Steps (10)
 - Step 31: Verify screenshot metadata
 - Step 32: Verify analysis results saved
 - Step 33: Test JSON report generation
@@ -46,6 +53,8 @@
 |------|--------|---------|
 | `test_full_workflow.py` | ✅ Complete | Full workflow integration test |
 | `test_notepad_workflow.py` | ✅ Complete | Notepad application workflow test |
+| `test_calculator_workflow.py` | ✅ Complete | Calculator application workflow test |
+| `test_browser_workflow.py` | ✅ Complete | Browser application workflow test |
 
 ## Next Steps
 

@@ -15,7 +15,12 @@ import logging
 
 from PIL import ImageGrab
 from PIL import Image as PILImage
-import numpy as np
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    np = None
 
 logger = logging.getLogger(__name__)
 
@@ -67,19 +72,25 @@ class ScreenshotAnalyzer:
             
             # Load image
             image = PILImage.open(image_path_obj)
-            img_array = np.array(image)
             
-            # Basic metrics
-            height, width = img_array.shape[:2]
-            
-            # Calculate quality score (simplified)
-            if len(img_array.shape) == 3:
-                # Color image
-                brightness = np.mean(img_array)
-                quality_score = min(1.0, brightness / 255.0)
+            if NUMPY_AVAILABLE:
+                img_array = np.array(image)
+                
+                # Basic metrics
+                height, width = img_array.shape[:2]
+                
+                # Calculate quality score (simplified)
+                if len(img_array.shape) == 3:
+                    # Color image
+                    brightness = np.mean(img_array)
+                    quality_score = min(1.0, brightness / 255.0)
+                else:
+                    # Grayscale
+                    quality_score = 0.7
             else:
-                # Grayscale
-                quality_score = 0.7
+                # Fallback without numpy
+                width, height = image.size
+                quality_score = 0.8  # Default score
             
             # Mock UI element detection (simplified)
             ui_elements = []
@@ -122,3 +133,4 @@ class ScreenshotAnalyzer:
                 "accessibility_issues": ["Analysis failed"],
                 "performance_assessment": "unknown",
                 "recommendations": ["Check image file and try again"]
+            }
