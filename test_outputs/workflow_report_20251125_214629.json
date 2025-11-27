@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-11-25T21:46:29.038909",
+  "analysis": {
+    "timestamp": "2025-11-25T21:46:29.038681",
+    "image_path": "screenshots\\screenshot_20251125_214628.png",
+    "dimensions": {
+      "width": 2560,
+      "height": 1440
+    },
+    "quality_score": 0.8,
+    "ui_elements": [
+      {
+        "type": "button",
+        "x": 50,
+        "y": 50,
+        "width": 100,
+        "height": 40
+      },
+      {
+        "type": "menu",
+        "x": 10,
+        "y": 10,
+        "width": 200,
+        "height": 30
+      }
+    ],
+    "accessibility_issues": [],
+    "performance_assessment": "good",
+    "recommendations": [
+      "Image analysis completed",
+      "Consider using AI vision APIs for detailed analysis"
+    ],
+    "analysis_time": 0.1
+  }
+}
