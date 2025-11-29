@@ -381,7 +381,10 @@ async def run_analysis_results_saving_test():
         return False
     
     # Step 4: Verify structure
-    test.verify_json_structure_matches_dataclass(json_path)
+    structure_valid = test.verify_json_structure_matches_dataclass(json_path)
+    if not structure_valid:
+        print("[ERROR] Structure validation failed")
+        return False
     
     # Step 5: Test loading
     loaded_data = test.test_loading_saved_results(json_path)
@@ -390,10 +393,16 @@ async def run_analysis_results_saving_test():
         return False
     
     # Step 6: Verify fields
-    test.verify_all_fields_present(loaded_data)
+    fields_valid = test.verify_all_fields_present(loaded_data)
+    if not fields_valid:
+        print("[ERROR] Field verification failed")
+        return False
     
     # Step 7: Test multiple analyses
-    test.test_multiple_analyses()
+    multiple_analyses_valid = test.test_multiple_analyses()
+    if not multiple_analyses_valid:
+        print("[ERROR] Multiple analyses test failed")
+        return False
     
     # Summary
     print()
@@ -402,10 +411,14 @@ async def run_analysis_results_saving_test():
     print("=" * 60)
     print(f"Analysis run: {'✅' if analysis_result else '❌'}")
     print(f"JSON created: {'✅' if json_path else '❌'}")
+    print(f"Structure verified: {'✅' if structure_valid else '❌'}")
     print(f"Results loaded: {'✅' if loaded_data else '❌'}")
+    print(f"Fields verified: {'✅' if fields_valid else '❌'}")
+    print(f"Multiple analyses: {'✅' if multiple_analyses_valid else '❌'}")
     print()
     
-    success = analysis_result and json_path and loaded_data
+    # Final success check - all steps must pass
+    success = analysis_result and json_path and structure_valid and loaded_data and fields_valid and multiple_analyses_valid
     
     if success:
         print("[SUCCESS] Analysis results saving test passed!")
